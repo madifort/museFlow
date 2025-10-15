@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 interface StatsPanelProps {
   inputText: string;
@@ -6,7 +6,11 @@ interface StatsPanelProps {
   selectedOperation: string;
 }
 
-const StatsPanel: React.FC<StatsPanelProps> = ({ inputText, output, selectedOperation }) => {
+const StatsPanel: React.FC<StatsPanelProps> = ({
+  inputText,
+  output,
+  selectedOperation,
+}) => {
   const [stats, setStats] = useState({
     wordCount: 0,
     charCount: 0,
@@ -16,12 +20,21 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ inputText, output, selectedOper
   });
 
   useEffect(() => {
-    const words = inputText.trim().split(/\s+/).filter((word) => word.length > 0);
+    const words = inputText
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0);
     const chars = inputText.length;
     const readingTime = Math.ceil(words.length / 200); // Average reading speed: 200 words per minute
 
-    const outputWords = output.trim().split(/\s+/).filter((word) => word.length > 0);
-    const compressionRatio = words.length > 0 ? Math.round((1 - outputWords.length / words.length) * 100) : 0;
+    const outputWords = output
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0);
+    const compressionRatio =
+      words.length > 0
+        ? Math.round((1 - outputWords.length / words.length) * 100)
+        : 0;
 
     setStats({
       wordCount: words.length,
@@ -42,39 +55,49 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ inputText, output, selectedOper
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-blue-50 rounded-lg p-3">
           <div className="text-xs text-blue-600 font-medium mb-1">Input</div>
-          <div className="text-lg font-bold text-blue-800">{stats.wordCount}</div>
+          <div className="text-lg font-bold text-blue-800">
+            {stats.wordCount}
+          </div>
           <div className="text-xs text-blue-600">words</div>
         </div>
 
         <div className="bg-green-50 rounded-lg p-3">
           <div className="text-xs text-green-600 font-medium mb-1">Output</div>
-          <div className="text-lg font-bold text-green-800">{stats.outputWordCount}</div>
+          <div className="text-lg font-bold text-green-800">
+            {stats.outputWordCount}
+          </div>
           <div className="text-xs text-green-600">words</div>
         </div>
 
         <div className="bg-purple-50 rounded-lg p-3">
-          <div className="text-xs text-purple-600 font-medium mb-1">Reading Time</div>
-          <div className="text-lg font-bold text-purple-800">{stats.readingTime}</div>
+          <div className="text-xs text-purple-600 font-medium mb-1">
+            Reading Time
+          </div>
+          <div className="text-lg font-bold text-purple-800">
+            {stats.readingTime}
+          </div>
           <div className="text-xs text-purple-600">minutes</div>
         </div>
 
-        {selectedOperation === 'summarize' && (
+        {selectedOperation === "summarize" && (
           <div className="bg-orange-50 rounded-lg p-3">
-            <div className="text-xs text-orange-600 font-medium mb-1">Compression</div>
+            <div className="text-xs text-orange-600 font-medium mb-1">
+              Compression
+            </div>
             <div className="text-lg font-bold text-orange-800">
-              {stats.compressionRatio}
-              %
+              {stats.compressionRatio}%
             </div>
             <div className="text-xs text-orange-600">reduced</div>
           </div>
         )}
 
-        {selectedOperation === 'expand' && (
+        {selectedOperation === "expand" && (
           <div className="bg-indigo-50 rounded-lg p-3">
-            <div className="text-xs text-indigo-600 font-medium mb-1">Expansion</div>
+            <div className="text-xs text-indigo-600 font-medium mb-1">
+              Expansion
+            </div>
             <div className="text-lg font-bold text-indigo-800">
-              {Math.round((stats.outputWordCount / stats.wordCount - 1) * 100)}
-              %
+              {Math.round((stats.outputWordCount / stats.wordCount - 1) * 100)}%
             </div>
             <div className="text-xs text-indigo-600">increase</div>
           </div>
@@ -83,9 +106,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ inputText, output, selectedOper
 
       <div className="mt-3 pt-3 border-t border-gray-200">
         <div className="text-xs text-gray-600">
-          <span className="font-medium">Operation:</span>
-          {' '}
-          {selectedOperation}
+          <span className="font-medium">Operation:</span> {selectedOperation}
         </div>
       </div>
     </div>

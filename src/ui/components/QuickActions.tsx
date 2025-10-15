@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface QuickAction {
   id: string;
@@ -16,32 +16,32 @@ interface QuickActionsProps {
 const QuickActions: React.FC<QuickActionsProps> = ({ onAction, inputText }) => {
   const quickActions: QuickAction[] = [
     {
-      id: 'extract-keywords',
-      label: 'Extract Keywords',
-      icon: '🔑',
-      description: 'Find key terms',
-      action: () => onAction('extract-keywords', inputText),
+      id: "extract-keywords",
+      label: "Extract Keywords",
+      icon: "🔑",
+      description: "Find key terms",
+      action: () => onAction("extract-keywords", inputText),
     },
     {
-      id: 'translate',
-      label: 'Translate',
-      icon: '🌐',
-      description: 'Translate text',
-      action: () => onAction('translate', inputText),
+      id: "translate",
+      label: "Translate",
+      icon: "🌐",
+      description: "Translate text",
+      action: () => onAction("translate", inputText),
     },
     {
-      id: 'tone-analysis',
-      label: 'Tone Analysis',
-      icon: '🎭',
-      description: 'Analyze sentiment',
-      action: () => onAction('tone-analysis', inputText),
+      id: "tone-analysis",
+      label: "Tone Analysis",
+      icon: "🎭",
+      description: "Analyze sentiment",
+      action: () => onAction("tone-analysis", inputText),
     },
     {
-      id: 'expand',
-      label: 'Expand',
-      icon: '📈',
-      description: 'Add more detail',
-      action: () => onAction('expand', inputText),
+      id: "expand",
+      label: "Expand",
+      icon: "📈",
+      description: "Add more detail",
+      action: () => onAction("expand", inputText),
     },
   ];
 
@@ -62,8 +62,12 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onAction, inputText }) => {
             <div className="flex items-center gap-2">
               <span className="text-lg">{action.icon}</span>
               <div className="text-left">
-                <div className="text-xs font-medium text-gray-900">{action.label}</div>
-                <div className="text-xs text-gray-500">{action.description}</div>
+                <div className="text-xs font-medium text-gray-900">
+                  {action.label}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {action.description}
+                </div>
               </div>
             </div>
           </button>

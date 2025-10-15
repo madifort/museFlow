@@ -1,6 +1,6 @@
 // Utility for building context-aware prompts for Chrome AI APIs
 
-export type AIOperation = 'summarize' | 'rewrite' | 'ideate';
+export type AIOperation = "summarize" | "rewrite" | "ideate";
 
 export interface PromptContext {
   content: string;
@@ -21,17 +21,17 @@ export function buildPrompt(
   const baseContent = content.trim();
 
   if (!baseContent) {
-    throw new Error('Content cannot be empty');
+    throw new Error("Content cannot be empty");
   }
 
   switch (type) {
-    case 'summarize':
+    case "summarize":
       return buildSummarizePrompt(baseContent, context);
 
-    case 'rewrite':
+    case "rewrite":
       return buildRewritePrompt(baseContent, context);
 
-    case 'ideate':
+    case "ideate":
       return buildIdeatePrompt(baseContent, context);
 
     default:
@@ -39,7 +39,10 @@ export function buildPrompt(
   }
 }
 
-function buildSummarizePrompt(content: string, context?: Partial<PromptContext>): string {
+function buildSummarizePrompt(
+  content: string,
+  context?: Partial<PromptContext>,
+): string {
   let prompt = `Summarize this content clearly and concisely:\n\n${content}`;
 
   if (context?.title) {
@@ -50,12 +53,16 @@ function buildSummarizePrompt(content: string, context?: Partial<PromptContext>)
     prompt += `\n\nTailor the summary for: ${context.targetAudience}`;
   }
 
-  prompt += '\n\nProvide:\n- A clear main summary (2-3 sentences)\n- Key points in bullet format\n- Important details or statistics';
+  prompt +=
+    "\n\nProvide:\n- A clear main summary (2-3 sentences)\n- Key points in bullet format\n- Important details or statistics";
 
   return prompt;
 }
 
-function buildRewritePrompt(content: string, context?: Partial<PromptContext>): string {
+function buildRewritePrompt(
+  content: string,
+  context?: Partial<PromptContext>,
+): string {
   let prompt = `Rewrite this content to be more engaging and clear:\n\n${content}`;
 
   if (context?.title) {
@@ -66,16 +73,20 @@ function buildRewritePrompt(content: string, context?: Partial<PromptContext>): 
     prompt += `\n\nTarget audience: ${context.targetAudience}`;
   }
 
-  if (context?.language && context.language !== 'en') {
+  if (context?.language && context.language !== "en") {
     prompt += `\n\nAdapt for ${context.language} language and cultural context`;
   }
 
-  prompt += '\n\nImprove:\n- Clarity and readability\n- Engagement and flow\n- Structure and organization\n- Tone and voice';
+  prompt +=
+    "\n\nImprove:\n- Clarity and readability\n- Engagement and flow\n- Structure and organization\n- Tone and voice";
 
   return prompt;
 }
 
-function buildIdeatePrompt(content: string, context?: Partial<PromptContext>): string {
+function buildIdeatePrompt(
+  content: string,
+  context?: Partial<PromptContext>,
+): string {
   let prompt = `Generate creative ideas and suggestions based on this content:\n\n${content}`;
 
   if (context?.title) {
@@ -86,7 +97,8 @@ function buildIdeatePrompt(content: string, context?: Partial<PromptContext>): s
     prompt += `\n\nSource: ${context.url}`;
   }
 
-  prompt += '\n\nProvide:\n- 💡 Creative expansion ideas\n- 🎯 Practical applications\n- 🔍 Related concepts to explore\n- 📊 Ways to visualize or present\n- 🚀 Action items or next steps';
+  prompt +=
+    "\n\nProvide:\n- 💡 Creative expansion ideas\n- 🎯 Practical applications\n- 🔍 Related concepts to explore\n- 📊 Ways to visualize or present\n- 🚀 Action items or next steps";
 
   return prompt;
 }
@@ -94,17 +106,26 @@ function buildIdeatePrompt(content: string, context?: Partial<PromptContext>): s
 /**
  * Validates content length and quality for AI processing
  */
-export function validateContent(content: string): { valid: boolean; message?: string } {
+export function validateContent(content: string): {
+  valid: boolean;
+  message?: string;
+} {
   if (!content || content.trim().length === 0) {
-    return { valid: false, message: 'Content cannot be empty' };
+    return { valid: false, message: "Content cannot be empty" };
   }
 
   if (content.trim().length < 10) {
-    return { valid: false, message: 'Content too short (minimum 10 characters)' };
+    return {
+      valid: false,
+      message: "Content too short (minimum 10 characters)",
+    };
   }
 
   if (content.length > 10000) {
-    return { valid: false, message: 'Content too long (maximum 10,000 characters)' };
+    return {
+      valid: false,
+      message: "Content too long (maximum 10,000 characters)",
+    };
   }
 
   return { valid: true };
@@ -117,19 +138,46 @@ export function extractContentContext(content: string): Partial<PromptContext> {
   const context: Partial<PromptContext> = {};
 
   // Detect language (simple heuristic)
-  const englishWords = ['the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
+  const englishWords = [
+    "the",
+    "and",
+    "or",
+    "but",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "with",
+    "by",
+  ];
   const words = content.toLowerCase().split(/\s+/);
-  const englishWordCount = words.filter((word) => englishWords.includes(word)).length;
+  const englishWordCount = words.filter((word) =>
+    englishWords.includes(word),
+  ).length;
   const isEnglish = englishWordCount / words.length > 0.1;
 
-  context.language = isEnglish ? 'en' : 'auto-detect';
+  context.language = isEnglish ? "en" : "auto-detect";
 
   // Detect if content seems technical
-  const technicalKeywords = ['api', 'function', 'method', 'class', 'variable', 'code', 'algorithm', 'database', 'server'];
-  const hasTechnicalContent = technicalKeywords.some((keyword) => content.toLowerCase().includes(keyword));
+  const technicalKeywords = [
+    "api",
+    "function",
+    "method",
+    "class",
+    "variable",
+    "code",
+    "algorithm",
+    "database",
+    "server",
+  ];
+  const hasTechnicalContent = technicalKeywords.some((keyword) =>
+    content.toLowerCase().includes(keyword),
+  );
 
   if (hasTechnicalContent) {
-    context.targetAudience = 'technical audience';
+    context.targetAudience = "technical audience";
   }
 
   return context;

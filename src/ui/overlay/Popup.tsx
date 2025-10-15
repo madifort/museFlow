@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import QuickActions from '../components/QuickActions';
-import StatsPanel from '../components/StatsPanel';
-import { useKeyboardShortcuts, createMuseFlowShortcuts } from '../hooks/useKeyboardShortcuts';
+import React, { useState, useEffect } from "react";
+import QuickActions from "../components/QuickActions";
+import StatsPanel from "../components/StatsPanel";
+import {
+  useKeyboardShortcuts,
+  createMuseFlowShortcuts,
+} from "../hooks/useKeyboardShortcuts";
 
 interface AIResponse {
   operation: string;
@@ -11,10 +14,12 @@ interface AIResponse {
 }
 
 const Popup: React.FC = () => {
-  const [inputText, setInputText] = useState('');
-  const [selectedOperation, setSelectedOperation] = useState<'summarize' | 'rewrite' | 'ideate'>('summarize');
+  const [inputText, setInputText] = useState("");
+  const [selectedOperation, setSelectedOperation] = useState<
+    "summarize" | "rewrite" | "ideate"
+  >("summarize");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [output, setOutput] = useState('');
+  const [output, setOutput] = useState("");
   const [cachedResponses, setCachedResponses] = useState<AIResponse[]>([]);
 
   // Load cached responses on component mount
@@ -26,30 +31,30 @@ const Popup: React.FC = () => {
     try {
       const result = await chrome.storage.local.get();
       const responses = Object.entries(result)
-        .filter(([key]) => key.startsWith('ai_cache_'))
+        .filter(([key]) => key.startsWith("ai_cache_"))
         .map(([, value]) => value as AIResponse)
         .sort((a, b) => b.timestamp - a.timestamp)
         .slice(0, 3);
 
       setCachedResponses(responses);
     } catch (error) {
-      console.error('Error loading cached responses:', error);
+      console.error("Error loading cached responses:", error);
     }
   };
 
   const handleProcessText = async () => {
     if (!inputText.trim()) {
-      alert('Please enter some text to process');
+      alert("Please enter some text to process");
       return;
     }
 
     setIsProcessing(true);
-    setOutput('');
+    setOutput("");
 
     try {
       // Send message to background script
       const response = await chrome.runtime.sendMessage({
-        type: 'PROCESS_TEXT',
+        type: "PROCESS_TEXT",
         data: {
           text: inputText,
           operation: selectedOperation,
@@ -59,11 +64,13 @@ const Popup: React.FC = () => {
       if (response && response.response) {
         setOutput(response.response);
       } else {
-        setOutput('Processing completed, but no response received. This is expected in the MVP version.');
+        setOutput(
+          "Processing completed, but no response received. This is expected in the MVP version.",
+        );
       }
     } catch (error) {
-      console.error('Error processing text:', error);
-      setOutput('Error processing text. Please try again.');
+      console.error("Error processing text:", error);
+      setOutput("Error processing text. Please try again.");
     } finally {
       setIsProcessing(false);
       // Reload cached responses to show the new one
@@ -72,21 +79,25 @@ const Popup: React.FC = () => {
   };
 
   const handleClearAll = () => {
-    setInputText('');
-    setOutput('');
+    setInputText("");
+    setOutput("");
   };
 
   const handleLoadCachedResponse = (response: AIResponse) => {
     setInputText(response.input);
     setOutput(response.response);
-    setSelectedOperation(response.operation as 'summarize' | 'rewrite' | 'ideate');
+    setSelectedOperation(
+      response.operation as "summarize" | "rewrite" | "ideate",
+    );
   };
 
   const handleQuickAction = (action: string, text?: string) => {
     // Handle quick actions
-    console.log('Quick action:', action, text);
+    console.log("Quick action:", action, text);
     // For now, just show an alert - in a real implementation, this would call different AI operations
-    alert(`Quick action "${action}" would be processed here with Chrome AI APIs`);
+    alert(
+      `Quick action "${action}" would be processed here with Chrome AI APIs`,
+    );
   };
 
   const handleCopyOutput = () => {
@@ -113,9 +124,7 @@ const Popup: React.FC = () => {
             <span className="text-white text-sm font-bold">MF</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">
-              MuseFlow AI
-            </h1>
+            <h1 className="text-xl font-bold text-gray-900">MuseFlow AI</h1>
             <p className="text-sm text-gray-600">
               Chrome AI Creative Assistant
             </p>
@@ -127,7 +136,10 @@ const Popup: React.FC = () => {
       <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-5 mb-4">
         {/* Input Section */}
         <div className="mb-4">
-          <label htmlFor="input-text" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="input-text"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Text to process:
           </label>
           <div className="relative">
@@ -140,9 +152,7 @@ const Popup: React.FC = () => {
             />
             {inputText.length > 0 && (
               <div className="absolute top-2 right-2 text-xs text-gray-400 bg-white/80 px-2 py-1 rounded">
-                {inputText.length}
-                {' '}
-                chars
+                {inputText.length} chars
               </div>
             )}
           </div>
@@ -150,28 +160,44 @@ const Popup: React.FC = () => {
 
         {/* Operation Selection */}
         <div className="mb-4">
-          <label htmlFor="operation" className="block text-sm font-medium text-gray-700 mb-2">
+          <label
+            htmlFor="operation"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
             Operation:
           </label>
           <div className="grid grid-cols-3 gap-2">
             {[
               {
-                value: 'summarize', label: 'Summarize', icon: '📝', desc: 'Brief overview',
+                value: "summarize",
+                label: "Summarize",
+                icon: "📝",
+                desc: "Brief overview",
               },
               {
-                value: 'rewrite', label: 'Rewrite', icon: '✏️', desc: 'Improve text',
+                value: "rewrite",
+                label: "Rewrite",
+                icon: "✏️",
+                desc: "Improve text",
               },
               {
-                value: 'ideate', label: 'Ideate', icon: '💡', desc: 'Generate ideas',
+                value: "ideate",
+                label: "Ideate",
+                icon: "💡",
+                desc: "Generate ideas",
               },
             ].map((op) => (
               <button
                 key={op.value}
-                onClick={() => setSelectedOperation(op.value as 'summarize' | 'rewrite' | 'ideate')}
+                onClick={() =>
+                  setSelectedOperation(
+                    op.value as "summarize" | "rewrite" | "ideate",
+                  )
+                }
                 className={`p-2 rounded-lg border-2 transition-all duration-200 text-xs ${
                   selectedOperation === op.value
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
                 }`}
               >
                 <div className="text-sm mb-1">{op.icon}</div>
@@ -191,9 +217,25 @@ const Popup: React.FC = () => {
           >
             {isProcessing ? (
               <div className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="animate-spin h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 Processing...
               </div>
@@ -240,9 +282,25 @@ const Popup: React.FC = () => {
         {isProcessing && (
           <div className="text-center py-4">
             <div className="inline-flex items-center px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm">
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <svg
+                className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
               Processing...
             </div>
@@ -260,10 +318,7 @@ const Popup: React.FC = () => {
       )}
 
       {/* Quick Actions */}
-      <QuickActions
-        onAction={handleQuickAction}
-        inputText={inputText}
-      />
+      <QuickActions onAction={handleQuickAction} inputText={inputText} />
 
       {/* Cached Responses */}
       {cachedResponses.length > 0 && (
@@ -310,8 +365,14 @@ const Popup: React.FC = () => {
           <p className="text-xs text-gray-500">Chrome AI Challenge 2025</p>
           <div className="mt-2 flex justify-center gap-2">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
-            <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+            <div
+              className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"
+              style={{ animationDelay: "0.2s" }}
+            />
+            <div
+              className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"
+              style={{ animationDelay: "0.4s" }}
+            />
           </div>
         </div>
       </div>

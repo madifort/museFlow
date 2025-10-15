@@ -1,8 +1,8 @@
 // Background service worker for Chrome extension
-import { buildPrompt } from '../utils/promptBuilder';
+import { buildPrompt } from "../utils/promptBuilder";
 
 interface ContextMessage {
-  type: 'CONTEXT_CAPTURED';
+  type: "CONTEXT_CAPTURED";
   data: {
     selectedText: string;
     title: string;
@@ -13,12 +13,15 @@ interface ContextMessage {
 }
 
 interface AIResponseMessage {
-  type: 'AI_RESPONSE';
+  type: "AI_RESPONSE";
   response: string;
 }
 
 // Mock Chrome AI API - replace with real implementation later
-async function fakeChromeAI(operation: 'summarize' | 'rewrite' | 'ideate', content: string): Promise<string> {
+async function fakeChromeAI(
+  operation: "summarize" | "rewrite" | "ideate",
+  content: string,
+): Promise<string> {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -31,29 +34,37 @@ async function fakeChromeAI(operation: 'summarize' | 'rewrite' | 'ideate', conte
   // Mock responses based on operation type
   const mockResponses = {
     summarize: `**Summary:**\n\n${content.substring(0, 100)}...\n\nKey points:\n• Main topic covered\n• Important details highlighted\n• Clear overview provided`,
-    rewrite: `**Enhanced Version:**\n\n${content.split(' ').map((word, i) => (i % 3 === 0 ? word.toUpperCase() : word)).join(' ')}\n\nThis rewritten version improves clarity and engagement while maintaining the original meaning.`,
-    ideate: '**Creative Ideas:**\n\n💡 **Expand on this topic** - Consider diving deeper into the technical aspects\n🎯 **Practical applications** - How can this be applied in real-world scenarios?\n🔍 **Related concepts** - Explore connections to other related topics\n📊 **Data visualization** - Create charts or diagrams to illustrate key points',
+    rewrite: `**Enhanced Version:**\n\n${content
+      .split(" ")
+      .map((word, i) => (i % 3 === 0 ? word.toUpperCase() : word))
+      .join(
+        " ",
+      )}\n\nThis rewritten version improves clarity and engagement while maintaining the original meaning.`,
+    ideate:
+      "**Creative Ideas:**\n\n💡 **Expand on this topic** - Consider diving deeper into the technical aspects\n🎯 **Practical applications** - How can this be applied in real-world scenarios?\n🔍 **Related concepts** - Explore connections to other related topics\n📊 **Data visualization** - Create charts or diagrams to illustrate key points",
   };
 
   return mockResponses[operation];
 }
 
 // Listen for messages from content scripts
-chrome.runtime.onMessage.addListener((message: ContextMessage, sender, sendResponse) => {
-  if (message.type === 'CONTEXT_CAPTURED') {
-    handleContextCapture(message.data);
-  }
+chrome.runtime.onMessage.addListener(
+  (message: ContextMessage, sender, sendResponse) => {
+    if (message.type === "CONTEXT_CAPTURED") {
+      handleContextCapture(message.data);
+    }
 
-  return true; // Keep message channel open for async response
-});
+    return true; // Keep message channel open for async response
+  },
+);
 
-async function handleContextCapture(data: ContextMessage['data']) {
+async function handleContextCapture(data: ContextMessage["data"]) {
   try {
-    console.log('MuseFlow: Processing context capture:', data);
+    console.log("MuseFlow: Processing context capture:", data);
 
     // For now, default to summarize operation
     // In the full implementation, this would be determined by user selection
-    const operation: 'summarize' | 'rewrite' | 'ideate' = 'summarize';
+    const operation: "summarize" | "rewrite" | "ideate" = "summarize";
 
     // Build the prompt using our utility
     const prompt = buildPrompt(operation, data.selectedText);
@@ -66,7 +77,7 @@ async function handleContextCapture(data: ContextMessage['data']) {
 
     // Send response back to content script
     const responseMessage: AIResponseMessage = {
-      type: 'AI_RESPONSE',
+      type: "AI_RESPONSE",
       response,
     };
 
@@ -81,12 +92,16 @@ async function handleContextCapture(data: ContextMessage['data']) {
       });
     });
   } catch (error) {
-    console.error('MuseFlow: Error processing context:', error);
+    console.error("MuseFlow: Error processing context:", error);
   }
 }
 
 // Cache responses using Chrome storage
-async function cacheResponse(operation: string, input: string, response: string) {
+async function cacheResponse(
+  operation: string,
+  input: string,
+  response: string,
+) {
   try {
     const cacheKey = `ai_cache_${Date.now()}`;
     const cacheData = {
@@ -101,7 +116,7 @@ async function cacheResponse(operation: string, input: string, response: string)
     // Keep only last 3 responses
     const allCache = await chrome.storage.local.get();
     const cacheEntries = Object.entries(allCache)
-      .filter(([key]) => key.startsWith('ai_cache_'))
+      .filter(([key]) => key.startsWith("ai_cache_"))
       .sort(([, a], [, b]) => (b as any).timestamp - (a as any).timestamp)
       .slice(0, 3);
 
@@ -114,33 +129,35 @@ async function cacheResponse(operation: string, input: string, response: string)
     await chrome.storage.local.clear();
     await chrome.storage.local.set(newCache);
   } catch (error) {
-    console.error('MuseFlow: Error caching response:', error);
+    console.error("MuseFlow: Error caching response:", error);
   }
 }
 
 // Handle extension installation
 chrome.runtime.onInstalled.addListener((details) => {
-  console.log('MuseFlow: Extension installed/updated:', details.reason);
+  console.log("MuseFlow: Extension installed/updated:", details.reason);
 
   // Create context menu for text selection
   chrome.contextMenus.create({
-    id: 'museflow-ai',
-    title: 'Process with MuseFlow AI',
-    contexts: ['selection'],
+    id: "museflow-ai",
+    title: "Process with MuseFlow AI",
+    contexts: ["selection"],
   });
 });
 
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === 'museflow-ai' && info.selectionText) {
+  if (info.menuItemId === "museflow-ai" && info.selectionText) {
     // Trigger the same flow as text selection
     const contextData: ContextMessage = {
-      type: 'CONTEXT_CAPTURED',
+      type: "CONTEXT_CAPTURED",
       data: {
         selectedText: info.selectionText,
-        title: tab?.title || 'Unknown',
-        url: tab?.url || 'Unknown',
-        snippet: info.selectionText.substring(0, 200) + (info.selectionText.length > 200 ? '...' : ''),
+        title: tab?.title || "Unknown",
+        url: tab?.url || "Unknown",
+        snippet:
+          info.selectionText.substring(0, 200) +
+          (info.selectionText.length > 200 ? "..." : ""),
         timestamp: Date.now(),
       },
     };

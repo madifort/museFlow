@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 interface KeyboardShortcut {
   key: string;
@@ -14,15 +14,21 @@ interface UseKeyboardShortcutsProps {
   enabled?: boolean;
 }
 
-export const useKeyboardShortcuts = ({ shortcuts, enabled = true }: UseKeyboardShortcutsProps) => {
+export const useKeyboardShortcuts = ({
+  shortcuts,
+  enabled = true,
+}: UseKeyboardShortcutsProps) => {
   useEffect(() => {
     if (!enabled) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      const matchingShortcut = shortcuts.find((shortcut) => shortcut.key.toLowerCase() === event.key.toLowerCase()
-               && !!shortcut.ctrlKey === event.ctrlKey
-               && !!shortcut.shiftKey === event.shiftKey
-               && !!shortcut.altKey === event.altKey);
+      const matchingShortcut = shortcuts.find(
+        (shortcut) =>
+          shortcut.key.toLowerCase() === event.key.toLowerCase() &&
+          !!shortcut.ctrlKey === event.ctrlKey &&
+          !!shortcut.shiftKey === event.shiftKey &&
+          !!shortcut.altKey === event.altKey,
+      );
 
       if (matchingShortcut) {
         event.preventDefault();
@@ -30,10 +36,10 @@ export const useKeyboardShortcuts = ({ shortcuts, enabled = true }: UseKeyboardS
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [shortcuts, enabled]);
 };
@@ -45,21 +51,25 @@ export const createMuseFlowShortcuts = (actions: {
   onCopy?: () => void;
 }) => [
   {
-    key: 'Enter',
+    key: "Enter",
     ctrlKey: true,
     action: actions.onProcess,
-    description: 'Process text (Ctrl+Enter)',
+    description: "Process text (Ctrl+Enter)",
   },
   {
-    key: 'Delete',
+    key: "Delete",
     ctrlKey: true,
     action: actions.onClear,
-    description: 'Clear all (Ctrl+Delete)',
+    description: "Clear all (Ctrl+Delete)",
   },
-  ...(actions.onCopy ? [{
-    key: 'c',
-    ctrlKey: true,
-    action: actions.onCopy,
-    description: 'Copy response (Ctrl+C)',
-  }] : []),
+  ...(actions.onCopy
+    ? [
+        {
+          key: "c",
+          ctrlKey: true,
+          action: actions.onCopy,
+          description: "Copy response (Ctrl+C)",
+        },
+      ]
+    : []),
 ];

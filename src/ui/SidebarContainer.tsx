@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import Sidebar from './sidebar/Sidebar';
-import { getCache, saveCache } from '../../storage/cache';
-import { buildPrompt } from '../../utils/promptBuilder';
+import React, { useEffect, useState } from "react";
+import Sidebar from "./sidebar/Sidebar";
+import { getCache, saveCache } from "../../storage/cache";
+import { buildPrompt } from "../../utils/promptBuilder";
 
 export default function SidebarContainer() {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [responses, setResponses] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +24,7 @@ export default function SidebarContainer() {
     await saveCache({ responses: updated });
     setResponses(updated);
     setLoading(false);
-    setInput('');
+    setInput("");
   };
 
   return (

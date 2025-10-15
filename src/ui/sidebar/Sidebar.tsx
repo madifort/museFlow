@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 interface AIResponse {
   operation: string;
@@ -8,10 +8,12 @@ interface AIResponse {
 }
 
 const Sidebar: React.FC = () => {
-  const [inputText, setInputText] = useState('');
-  const [selectedOperation, setSelectedOperation] = useState<'summarize' | 'rewrite' | 'ideate'>('summarize');
+  const [inputText, setInputText] = useState("");
+  const [selectedOperation, setSelectedOperation] = useState<
+    "summarize" | "rewrite" | "ideate"
+  >("summarize");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [output, setOutput] = useState('');
+  const [output, setOutput] = useState("");
   const [cachedResponses, setCachedResponses] = useState<AIResponse[]>([]);
 
   // Load cached responses on component mount
@@ -23,30 +25,30 @@ const Sidebar: React.FC = () => {
     try {
       const result = await chrome.storage.local.get();
       const responses = Object.entries(result)
-        .filter(([key]) => key.startsWith('ai_cache_'))
+        .filter(([key]) => key.startsWith("ai_cache_"))
         .map(([, value]) => value as AIResponse)
         .sort((a, b) => b.timestamp - a.timestamp)
         .slice(0, 3);
 
       setCachedResponses(responses);
     } catch (error) {
-      console.error('Error loading cached responses:', error);
+      console.error("Error loading cached responses:", error);
     }
   };
 
   const handleProcessText = async () => {
     if (!inputText.trim()) {
-      alert('Please enter some text to process');
+      alert("Please enter some text to process");
       return;
     }
 
     setIsProcessing(true);
-    setOutput('');
+    setOutput("");
 
     try {
       // Send message to background script
       const response = await chrome.runtime.sendMessage({
-        type: 'PROCESS_TEXT',
+        type: "PROCESS_TEXT",
         data: {
           text: inputText,
           operation: selectedOperation,
@@ -56,11 +58,13 @@ const Sidebar: React.FC = () => {
       if (response && response.response) {
         setOutput(response.response);
       } else {
-        setOutput('Processing completed, but no response received. This is expected in the MVP version.');
+        setOutput(
+          "Processing completed, but no response received. This is expected in the MVP version.",
+        );
       }
     } catch (error) {
-      console.error('Error processing text:', error);
-      setOutput('Error processing text. Please try again.');
+      console.error("Error processing text:", error);
+      setOutput("Error processing text. Please try again.");
     } finally {
       setIsProcessing(false);
       // Reload cached responses to show the new one
@@ -69,14 +73,16 @@ const Sidebar: React.FC = () => {
   };
 
   const handleClearAll = () => {
-    setInputText('');
-    setOutput('');
+    setInputText("");
+    setOutput("");
   };
 
   const handleLoadCachedResponse = (response: AIResponse) => {
     setInputText(response.input);
     setOutput(response.response);
-    setSelectedOperation(response.operation as 'summarize' | 'rewrite' | 'ideate');
+    setSelectedOperation(
+      response.operation as "summarize" | "rewrite" | "ideate",
+    );
   };
 
   return (
@@ -103,7 +109,10 @@ const Sidebar: React.FC = () => {
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 mb-8">
           {/* Input Section */}
           <div className="mb-8">
-            <label htmlFor="input-text" className="block text-lg font-medium text-gray-700 mb-3">
+            <label
+              htmlFor="input-text"
+              className="block text-lg font-medium text-gray-700 mb-3"
+            >
               Enter text to process:
             </label>
             <div className="relative">
@@ -116,9 +125,7 @@ const Sidebar: React.FC = () => {
               />
               {inputText.length > 0 && (
                 <div className="absolute top-3 right-3 text-sm text-gray-400 bg-white/80 px-3 py-1 rounded-full shadow-sm">
-                  {inputText.length}
-                  {' '}
-                  characters
+                  {inputText.length} characters
                 </div>
               )}
             </div>
@@ -126,28 +133,47 @@ const Sidebar: React.FC = () => {
 
           {/* Operation Selection */}
           <div className="mb-8">
-            <label htmlFor="operation" className="block text-lg font-medium text-gray-700 mb-4">
+            <label
+              htmlFor="operation"
+              className="block text-lg font-medium text-gray-700 mb-4"
+            >
               Choose operation:
             </label>
             <div className="grid grid-cols-3 gap-4">
               {[
                 {
-                  value: 'summarize', label: 'Summarize', icon: '📝', desc: 'Create a brief overview', color: 'blue',
+                  value: "summarize",
+                  label: "Summarize",
+                  icon: "📝",
+                  desc: "Create a brief overview",
+                  color: "blue",
                 },
                 {
-                  value: 'rewrite', label: 'Rewrite', icon: '✏️', desc: 'Improve and enhance text', color: 'green',
+                  value: "rewrite",
+                  label: "Rewrite",
+                  icon: "✏️",
+                  desc: "Improve and enhance text",
+                  color: "green",
                 },
                 {
-                  value: 'ideate', label: 'Ideate', icon: '💡', desc: 'Generate creative ideas', color: 'purple',
+                  value: "ideate",
+                  label: "Ideate",
+                  icon: "💡",
+                  desc: "Generate creative ideas",
+                  color: "purple",
                 },
               ].map((op) => (
                 <button
                   key={op.value}
-                  onClick={() => setSelectedOperation(op.value as 'summarize' | 'rewrite' | 'ideate')}
+                  onClick={() =>
+                    setSelectedOperation(
+                      op.value as "summarize" | "rewrite" | "ideate",
+                    )
+                  }
                   className={`p-4 rounded-xl border-2 transition-all duration-200 ${
                     selectedOperation === op.value
                       ? `border-${op.color}-500 bg-${op.color}-50 text-${op.color}-700 shadow-lg`
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md'
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md"
                   }`}
                 >
                   <div className="text-2xl mb-2">{op.icon}</div>
@@ -167,9 +193,25 @@ const Sidebar: React.FC = () => {
             >
               {isProcessing ? (
                 <div className="flex items-center justify-center gap-3">
-                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <svg
+                    className="animate-spin h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   Processing...
                 </div>
@@ -208,7 +250,7 @@ const Sidebar: React.FC = () => {
                     📋 Copy
                   </button>
                   <button
-                    onClick={() => setOutput('')}
+                    onClick={() => setOutput("")}
                     className="text-sm text-gray-600 hover:text-gray-700 transition-colors bg-gray-50 hover:bg-gray-100 px-3 py-1 rounded-lg"
                     title="Clear response"
                   >
@@ -228,9 +270,25 @@ const Sidebar: React.FC = () => {
           {isProcessing && (
             <div className="text-center py-8">
               <div className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 Processing with AI...
               </div>

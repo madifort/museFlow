@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import Popup from './overlay/Popup';
-import { buildPrompt } from '../../utils/promptBuilder';
+import React, { useState } from "react";
+import Popup from "./overlay/Popup";
+import { buildPrompt } from "../../utils/promptBuilder";
 
 export default function PopupContainer() {
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [output, setOutput] = useState('');
+  const [output, setOutput] = useState("");
 
-  const handleAction = async (mode: 'summarize' | 'rewrite' | 'ideate') => {
+  const handleAction = async (mode: "summarize" | "rewrite" | "ideate") => {
     if (!text.trim()) return;
     setLoading(true);
     const prompt = buildPrompt(text, mode);

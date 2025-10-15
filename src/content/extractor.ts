@@ -1,6 +1,6 @@
 // Content script for capturing user-selected text and context
 interface ContextData {
-  type: 'CONTEXT_CAPTURED';
+  type: "CONTEXT_CAPTURED";
   data: {
     selectedText: string;
     title: string;
@@ -11,17 +11,19 @@ interface ContextData {
 }
 
 // Listen for text selection events
-document.addEventListener('mouseup', async (event) => {
+document.addEventListener("mouseup", async (event) => {
   const selectedText = window.getSelection()?.toString().trim();
 
   if (selectedText && selectedText.length > 10) {
     const contextData: ContextData = {
-      type: 'CONTEXT_CAPTURED',
+      type: "CONTEXT_CAPTURED",
       data: {
         selectedText,
         title: document.title,
         url: window.location.href,
-        snippet: selectedText.substring(0, 200) + (selectedText.length > 200 ? '...' : ''),
+        snippet:
+          selectedText.substring(0, 200) +
+          (selectedText.length > 200 ? "..." : ""),
         timestamp: Date.now(),
       },
     };
@@ -29,18 +31,18 @@ document.addEventListener('mouseup', async (event) => {
     // Send message to background script
     try {
       await chrome.runtime.sendMessage(contextData);
-      console.log('MuseFlow: Context captured and sent to background');
+      console.log("MuseFlow: Context captured and sent to background");
     } catch (error) {
-      console.error('MuseFlow: Error sending context to background:', error);
+      console.error("MuseFlow: Error sending context to background:", error);
     }
   }
 });
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'AI_RESPONSE') {
+  if (message.type === "AI_RESPONSE") {
     // Handle AI response - could show a notification or update UI
-    console.log('MuseFlow: AI response received:', message.response);
+    console.log("MuseFlow: AI response received:", message.response);
 
     // You could inject a temporary overlay to show the response
     showAIOverlay(message.response);
@@ -51,7 +53,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 function showAIOverlay(response: string) {
   // Create a temporary overlay to show AI response
-  const overlay = document.createElement('div');
+  const overlay = document.createElement("div");
   overlay.style.cssText = `
     position: fixed;
     top: 20px;
@@ -79,7 +81,7 @@ function showAIOverlay(response: string) {
   document.body.appendChild(overlay);
 
   // Close overlay when clicking X
-  overlay.querySelector('#close-overlay')?.addEventListener('click', () => {
+  overlay.querySelector("#close-overlay")?.addEventListener("click", () => {
     overlay.remove();
   });
 

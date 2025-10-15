@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { getCache, clearCache } from '../storage/cache';
+import React, { useEffect, useState } from "react";
+import { getCache, clearCache } from "../storage/cache";
 
 export default function DashboardView() {
   const [history, setHistory] = useState<string[]>([]);
@@ -32,12 +32,16 @@ export default function DashboardView() {
             key={idx}
             className="p-4 rounded-xl bg-slate-800 border border-slate-700 shadow hover:shadow-xl transition-all"
           >
-            <p className="text-sm text-slate-200 whitespace-pre-line">{entry}</p>
+            <p className="text-sm text-slate-200 whitespace-pre-line">
+              {entry}
+            </p>
           </div>
         ))}
       </div>
       {history.length === 0 && (
-        <p className="text-slate-400 text-center mt-20">No recent interactions yet.</p>
+        <p className="text-slate-400 text-center mt-20">
+          No recent interactions yet.
+        </p>
       )}
     </div>
   );
