@@ -2,6 +2,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import Sidebar from './ui/sidebar/Sidebar'
 import './index.css'
+import 
+
+
 
 // Determine if we're in popup or options context
 const isPopup = window.location.pathname.includes('index.html');

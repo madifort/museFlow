@@ -13,7 +13,7 @@ interface ContextData {
 // Listen for text selection events
 document.addEventListener('mouseup', async (event) => {
   const selectedText = window.getSelection()?.toString().trim();
-  
+
   if (selectedText && selectedText.length > 10) {
     const contextData: ContextData = {
       type: 'CONTEXT_CAPTURED',
@@ -22,8 +22,8 @@ document.addEventListener('mouseup', async (event) => {
         title: document.title,
         url: window.location.href,
         snippet: selectedText.substring(0, 200) + (selectedText.length > 200 ? '...' : ''),
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      },
     };
 
     // Send message to background script
@@ -41,11 +41,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'AI_RESPONSE') {
     // Handle AI response - could show a notification or update UI
     console.log('MuseFlow: AI response received:', message.response);
-    
+
     // You could inject a temporary overlay to show the response
     showAIOverlay(message.response);
   }
-  
+
   return true; // Keep message channel open for async response
 });
 
@@ -67,7 +67,7 @@ function showAIOverlay(response: string) {
     font-size: 14px;
     line-height: 1.5;
   `;
-  
+
   overlay.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
       <strong style="color: #60a5fa;">MuseFlow AI</strong>
@@ -75,14 +75,14 @@ function showAIOverlay(response: string) {
     </div>
     <div style="max-height: 200px; overflow-y: auto;">${response}</div>
   `;
-  
+
   document.body.appendChild(overlay);
-  
+
   // Close overlay when clicking X
   overlay.querySelector('#close-overlay')?.addEventListener('click', () => {
     overlay.remove();
   });
-  
+
   // Auto-remove after 10 seconds
   setTimeout(() => {
     if (overlay.parentNode) {

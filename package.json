@@ -2,12 +2,12 @@
   "name": "museflow-chrome-ai",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
+  
   "scripts": {
     "dev": "vite --mode development",
     "build": "vite build",
     "test": "vitest run",
-    "lint": "eslint src --fix",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
     "package": "vite build && Compress-Archive -Path dist -DestinationPath dist.zip -Force"
   },
   "dependencies": {
@@ -15,19 +15,26 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.37.0",
+    "@types/chrome": "^0.0.251",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
-    "@types/chrome": "^0.0.251",
-    "@typescript-eslint/eslint-plugin": "^6.14.0",
-    "@typescript-eslint/parser": "^6.14.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.16",
-    "eslint": "^8.55.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "globals": "^16.4.0",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
     "typescript": "^5.2.2",
+    "typescript-eslint": "^8.46.1",
     "vite": "^5.0.8",
     "vitest": "^1.0.4"
   }

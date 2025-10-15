@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* MuseFlow Global Styles */
+:root {
+  --color-primary: #2563eb;
+  --color-background-dark: #0f172a;
+  --color-surface: #1e293b;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --radius-lg: 12px;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-background-dark);
+  color: var(--color-text-primary);
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+button:hover {
+  filter: brightness(1.1);
+}
+
+input, textarea {
+  outline: none;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid #334155;
+  border-radius: var(--radius-lg);
+  padding: 8px 12px;
+}

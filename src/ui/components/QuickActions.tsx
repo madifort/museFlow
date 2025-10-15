@@ -20,29 +20,29 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onAction, inputText }) => {
       label: 'Extract Keywords',
       icon: '🔑',
       description: 'Find key terms',
-      action: () => onAction('extract-keywords', inputText)
+      action: () => onAction('extract-keywords', inputText),
     },
     {
       id: 'translate',
       label: 'Translate',
       icon: '🌐',
       description: 'Translate text',
-      action: () => onAction('translate', inputText)
+      action: () => onAction('translate', inputText),
     },
     {
       id: 'tone-analysis',
       label: 'Tone Analysis',
       icon: '🎭',
       description: 'Analyze sentiment',
-      action: () => onAction('tone-analysis', inputText)
+      action: () => onAction('tone-analysis', inputText),
     },
     {
       id: 'expand',
       label: 'Expand',
       icon: '📈',
       description: 'Add more detail',
-      action: () => onAction('expand', inputText)
-    }
+      action: () => onAction('expand', inputText),
+    },
   ];
 
   return (

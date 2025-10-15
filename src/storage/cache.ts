@@ -16,7 +16,7 @@ export interface CacheOptions {
 
 const DEFAULT_OPTIONS: Required<CacheOptions> = {
   maxEntries: 10,
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  maxAge: 24 * 60 * 60 * 1000, // 24 hours
 };
 
 /**
@@ -24,23 +24,22 @@ const DEFAULT_OPTIONS: Required<CacheOptions> = {
  */
 export async function cacheResponse(
   response: CachedResponse,
-  options: CacheOptions = {}
+  options: CacheOptions = {},
 ): Promise<void> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  
+
   try {
     const cacheKey = `ai_cache_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     await chrome.storage.local.set({
       [cacheKey]: {
         ...response,
-        cachedAt: Date.now()
-      }
+        cachedAt: Date.now(),
+      },
     });
-    
+
     // Clean up old entries
     await cleanupCache(opts);
-    
   } catch (error) {
     console.error('MuseFlow: Error caching response:', error);
     throw error;
@@ -51,27 +50,25 @@ export async function cacheResponse(
  * Retrieve cached responses
  */
 export async function getCachedResponses(
-  options: CacheOptions = {}
+  options: CacheOptions = {},
 ): Promise<CachedResponse[]> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  
+
   try {
     const allCache = await chrome.storage.local.get();
     const now = Date.now();
-    
+
     const responses = Object.entries(allCache)
       .filter(([key]) => key.startsWith('ai_cache_'))
       .map(([, value]) => value as CachedResponse & { cachedAt: number })
-      .filter((response) => {
+      .filter((response) =>
         // Filter by age
-        return now - response.cachedAt < opts.maxAge;
-      })
+        now - response.cachedAt < opts.maxAge)
       .sort((a, b) => b.timestamp - a.timestamp)
       .slice(0, opts.maxEntries)
       .map(({ cachedAt, ...response }) => response); // Remove cachedAt from response
-    
+
     return responses;
-    
   } catch (error) {
     console.error('MuseFlow: Error retrieving cached responses:', error);
     return [];
@@ -87,15 +84,15 @@ export async function searchCachedResponses(
     content?: string;
     url?: string;
   },
-  options: CacheOptions = {}
+  options: CacheOptions = {},
 ): Promise<CachedResponse[]> {
   const allResponses = await getCachedResponses(options);
-  
-  return allResponses.filter(response => {
+
+  return allResponses.filter((response) => {
     if (query.operation && response.operation !== query.operation) {
       return false;
     }
-    
+
     if (query.content) {
       const searchTerm = query.content.toLowerCase();
       const matchesInput = response.input.toLowerCase().includes(searchTerm);
@@ -104,11 +101,11 @@ export async function searchCachedResponses(
         return false;
       }
     }
-    
+
     if (query.url && response.url !== query.url) {
       return false;
     }
-    
+
     return true;
   });
 }
@@ -120,10 +117,9 @@ export async function clearCache(): Promise<void> {
   try {
     const allCache = await chrome.storage.local.get();
     const cacheKeys = Object.keys(allCache)
-      .filter(key => key.startsWith('ai_cache_'));
-    
+      .filter((key) => key.startsWith('ai_cache_'));
+
     await chrome.storage.local.remove(cacheKeys);
-    
   } catch (error) {
     console.error('MuseFlow: Error clearing cache:', error);
     throw error;
@@ -144,33 +140,32 @@ export async function getCacheStats(): Promise<{
     const cacheEntries = Object.entries(allCache)
       .filter(([key]) => key.startsWith('ai_cache_'))
       .map(([, value]) => value as CachedResponse & { cachedAt: number });
-    
+
     if (cacheEntries.length === 0) {
       return {
         totalEntries: 0,
         totalSize: 0,
         oldestEntry: null,
-        newestEntry: null
+        newestEntry: null,
       };
     }
-    
-    const timestamps = cacheEntries.map(entry => entry.timestamp);
+
+    const timestamps = cacheEntries.map((entry) => entry.timestamp);
     const totalSize = JSON.stringify(allCache).length;
-    
+
     return {
       totalEntries: cacheEntries.length,
       totalSize,
       oldestEntry: Math.min(...timestamps),
-      newestEntry: Math.max(...timestamps)
+      newestEntry: Math.max(...timestamps),
     };
-    
   } catch (error) {
     console.error('MuseFlow: Error getting cache stats:', error);
     return {
       totalEntries: 0,
       totalSize: 0,
       oldestEntry: null,
-      newestEntry: null
+      newestEntry: null,
     };
   }
 }
@@ -182,36 +177,34 @@ async function cleanupCache(options: Required<CacheOptions>): Promise<void> {
   try {
     const allCache = await chrome.storage.local.get();
     const now = Date.now();
-    
+
     const validEntries: Record<string, any> = {};
     const cacheEntries = Object.entries(allCache)
       .filter(([key]) => key.startsWith('ai_cache_'))
       .map(([key, value]) => ({ key, value: value as CachedResponse & { cachedAt: number } }))
-      .filter(({ value }) => {
+      .filter(({ value }) =>
         // Keep entries that are not too old
-        return now - value.cachedAt < options.maxAge;
-      })
+        now - value.cachedAt < options.maxAge)
       .sort((a, b) => b.value.timestamp - a.value.timestamp)
       .slice(0, options.maxEntries);
-    
+
     // Rebuild cache with only valid entries
     cacheEntries.forEach(({ key, value }) => {
       validEntries[key] = value;
     });
-    
+
     // Clear all cache entries first
     const allCacheKeys = Object.keys(allCache)
-      .filter(key => key.startsWith('ai_cache_'));
-    
+      .filter((key) => key.startsWith('ai_cache_'));
+
     if (allCacheKeys.length > 0) {
       await chrome.storage.local.remove(allCacheKeys);
     }
-    
+
     // Add back only valid entries
     if (Object.keys(validEntries).length > 0) {
       await chrome.storage.local.set(validEntries);
     }
-    
   } catch (error) {
     console.error('MuseFlow: Error cleaning up cache:', error);
   }
@@ -236,11 +229,10 @@ export async function exportCache(): Promise<string> {
 export async function importCache(data: string): Promise<void> {
   try {
     const responses: CachedResponse[] = JSON.parse(data);
-    
+
     for (const response of responses) {
       await cacheResponse(response);
     }
-    
   } catch (error) {
     console.error('MuseFlow: Error importing cache:', error);
     throw error;

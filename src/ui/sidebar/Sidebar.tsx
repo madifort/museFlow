@@ -27,7 +27,7 @@ const Sidebar: React.FC = () => {
         .map(([, value]) => value as AIResponse)
         .sort((a, b) => b.timestamp - a.timestamp)
         .slice(0, 3);
-      
+
       setCachedResponses(responses);
     } catch (error) {
       console.error('Error loading cached responses:', error);
@@ -49,8 +49,8 @@ const Sidebar: React.FC = () => {
         type: 'PROCESS_TEXT',
         data: {
           text: inputText,
-          operation: selectedOperation
-        }
+          operation: selectedOperation,
+        },
       });
 
       if (response && response.response) {
@@ -116,7 +116,9 @@ const Sidebar: React.FC = () => {
               />
               {inputText.length > 0 && (
                 <div className="absolute top-3 right-3 text-sm text-gray-400 bg-white/80 px-3 py-1 rounded-full shadow-sm">
-                  {inputText.length} characters
+                  {inputText.length}
+                  {' '}
+                  characters
                 </div>
               )}
             </div>
@@ -129,9 +131,15 @@ const Sidebar: React.FC = () => {
             </label>
             <div className="grid grid-cols-3 gap-4">
               {[
-                { value: 'summarize', label: 'Summarize', icon: '📝', desc: 'Create a brief overview', color: 'blue' },
-                { value: 'rewrite', label: 'Rewrite', icon: '✏️', desc: 'Improve and enhance text', color: 'green' },
-                { value: 'ideate', label: 'Ideate', icon: '💡', desc: 'Generate creative ideas', color: 'purple' }
+                {
+                  value: 'summarize', label: 'Summarize', icon: '📝', desc: 'Create a brief overview', color: 'blue',
+                },
+                {
+                  value: 'rewrite', label: 'Rewrite', icon: '✏️', desc: 'Improve and enhance text', color: 'green',
+                },
+                {
+                  value: 'ideate', label: 'Ideate', icon: '💡', desc: 'Generate creative ideas', color: 'purple',
+                },
               ].map((op) => (
                 <button
                   key={op.value}
@@ -160,8 +168,8 @@ const Sidebar: React.FC = () => {
               {isProcessing ? (
                 <div className="flex items-center justify-center gap-3">
                   <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                   Processing...
                 </div>
@@ -221,8 +229,8 @@ const Sidebar: React.FC = () => {
             <div className="text-center py-8">
               <div className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
                 Processing with AI...
               </div>
@@ -252,7 +260,8 @@ const Sidebar: React.FC = () => {
                     </span>
                   </div>
                   <p className="text-sm text-gray-700 line-clamp-2">
-                    {response.input.substring(0, 100)}...
+                    {response.input.substring(0, 100)}
+                    ...
                   </p>
                 </div>
               ))}
