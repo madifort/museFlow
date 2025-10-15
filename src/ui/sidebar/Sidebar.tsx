@@ -80,76 +80,136 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            MuseFlow AI Assistant
-          </h1>
-          <p className="text-gray-600">
-            Your Chrome AI companion for summarizing, rewriting, and ideating content
-          </p>
+        <div className="mb-10 text-center">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white text-2xl font-bold">MF</span>
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                MuseFlow AI
+              </h1>
+              <p className="text-lg text-gray-600">
+                Your Chrome AI companion for creative content processing
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 mb-8">
           {/* Input Section */}
-          <div className="mb-6">
-            <label htmlFor="input-text" className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="mb-8">
+            <label htmlFor="input-text" className="block text-lg font-medium text-gray-700 mb-3">
               Enter text to process:
             </label>
-            <textarea
-              id="input-text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Paste or type your content here..."
-              className="w-full h-32 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-            />
+            <div className="relative">
+              <textarea
+                id="input-text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Paste or type your content here..."
+                className="w-full h-40 p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none transition-all duration-200 bg-gray-50/50 text-gray-800"
+              />
+              {inputText.length > 0 && (
+                <div className="absolute top-3 right-3 text-sm text-gray-400 bg-white/80 px-3 py-1 rounded-full shadow-sm">
+                  {inputText.length} characters
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Operation Selection */}
-          <div className="mb-6">
-            <label htmlFor="operation" className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="mb-8">
+            <label htmlFor="operation" className="block text-lg font-medium text-gray-700 mb-4">
               Choose operation:
             </label>
-            <select
-              id="operation"
-              value={selectedOperation}
-              onChange={(e) => setSelectedOperation(e.target.value as 'summarize' | 'rewrite' | 'ideate')}
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="summarize">📝 Summarize</option>
-              <option value="rewrite">✏️ Rewrite</option>
-              <option value="ideate">💡 Ideate</option>
-            </select>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { value: 'summarize', label: 'Summarize', icon: '📝', desc: 'Create a brief overview', color: 'blue' },
+                { value: 'rewrite', label: 'Rewrite', icon: '✏️', desc: 'Improve and enhance text', color: 'green' },
+                { value: 'ideate', label: 'Ideate', icon: '💡', desc: 'Generate creative ideas', color: 'purple' }
+              ].map((op) => (
+                <button
+                  key={op.value}
+                  onClick={() => setSelectedOperation(op.value as 'summarize' | 'rewrite' | 'ideate')}
+                  className={`p-4 rounded-xl border-2 transition-all duration-200 ${
+                    selectedOperation === op.value
+                      ? `border-${op.color}-500 bg-${op.color}-50 text-${op.color}-700 shadow-lg`
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-md'
+                  }`}
+                >
+                  <div className="text-2xl mb-2">{op.icon}</div>
+                  <div className="font-semibold text-base mb-1">{op.label}</div>
+                  <div className="text-sm text-gray-600">{op.desc}</div>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 mb-6">
+          <div className="flex gap-4 mb-8">
             <button
               onClick={handleProcessText}
               disabled={isProcessing || !inputText.trim()}
-              className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl text-lg"
             >
-              {isProcessing ? '🔄 Processing...' : '🚀 Run MuseFlow'}
+              {isProcessing ? (
+                <div className="flex items-center justify-center gap-3">
+                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-3">
+                  <span>🚀</span>
+                  <span>Run MuseFlow</span>
+                </div>
+              )}
             </button>
             <button
               onClick={handleClearAll}
-              className="px-4 py-3 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="px-6 py-4 border border-gray-200 text-gray-600 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm hover:shadow-md"
+              title="Clear all content"
             >
-              🗑️ Clear
+              <div className="flex items-center gap-2">
+                <span>🗑️</span>
+                <span>Clear</span>
+              </div>
             </button>
           </div>
 
           {/* Output Section */}
           {output && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                AI Response:
-              </label>
-              <div className="bg-gray-50 border border-gray-200 rounded-md p-4 min-h-32">
-                <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans">
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <label className="text-lg font-medium text-gray-700">
+                  AI Response:
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigator.clipboard.writeText(output)}
+                    className="text-sm text-blue-600 hover:text-blue-700 transition-colors bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-lg"
+                    title="Copy to clipboard"
+                  >
+                    📋 Copy
+                  </button>
+                  <button
+                    onClick={() => setOutput('')}
+                    className="text-sm text-gray-600 hover:text-gray-700 transition-colors bg-gray-50 hover:bg-gray-100 px-3 py-1 rounded-lg"
+                    title="Clear response"
+                  >
+                    ✕ Clear
+                  </button>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-gray-50 to-blue-50 border border-gray-200 rounded-xl p-6 min-h-40 shadow-inner">
+                <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans leading-relaxed">
                   {output}
                 </pre>
               </div>

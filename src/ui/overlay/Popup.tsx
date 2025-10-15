@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import QuickActions from '../components/QuickActions';
+import StatsPanel from '../components/StatsPanel';
+import { useKeyboardShortcuts, createMuseFlowShortcuts } from '../hooks/useKeyboardShortcuts';
 
 interface AIResponse {
   operation: string;
@@ -79,32 +82,68 @@ const Popup: React.FC = () => {
     setSelectedOperation(response.operation as 'summarize' | 'rewrite' | 'ideate');
   };
 
+  const handleQuickAction = (action: string, text?: string) => {
+    // Handle quick actions
+    console.log('Quick action:', action, text);
+    // For now, just show an alert - in a real implementation, this would call different AI operations
+    alert(`Quick action "${action}" would be processed here with Chrome AI APIs`);
+  };
+
+  const handleCopyOutput = () => {
+    if (output) {
+      navigator.clipboard.writeText(output);
+    }
+  };
+
+  // Keyboard shortcuts
+  const shortcuts = createMuseFlowShortcuts({
+    onProcess: handleProcessText,
+    onClear: handleClearAll,
+    onCopy: output ? handleCopyOutput : undefined
+  });
+
+  useKeyboardShortcuts({ shortcuts });
+
   return (
-    <div className="w-96 h-[600px] bg-gray-50 p-4 overflow-y-auto">
+    <div className="w-96 h-[600px] bg-gradient-to-br from-gray-50 to-blue-50 p-4 overflow-y-auto">
       {/* Header */}
-      <div className="mb-4">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">
-          MuseFlow AI
-        </h1>
-        <p className="text-sm text-gray-600">
-          Chrome AI Creative Assistant
-        </p>
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <span className="text-white text-sm font-bold">MF</span>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">
+              MuseFlow AI
+            </h1>
+            <p className="text-sm text-gray-600">
+              Chrome AI Creative Assistant
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+      <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-5 mb-4">
         {/* Input Section */}
         <div className="mb-4">
           <label htmlFor="input-text" className="block text-sm font-medium text-gray-700 mb-2">
             Text to process:
           </label>
-          <textarea
-            id="input-text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="Paste or type your content here..."
-            className="w-full h-24 p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-          />
+          <div className="relative">
+            <textarea
+              id="input-text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Paste or type your content here..."
+              className="w-full h-24 p-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none transition-all duration-200 bg-gray-50/50"
+            />
+            {inputText.length > 0 && (
+              <div className="absolute top-2 right-2 text-xs text-gray-400 bg-white/80 px-2 py-1 rounded">
+                {inputText.length} chars
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Operation Selection */}
@@ -112,16 +151,27 @@ const Popup: React.FC = () => {
           <label htmlFor="operation" className="block text-sm font-medium text-gray-700 mb-2">
             Operation:
           </label>
-          <select
-            id="operation"
-            value={selectedOperation}
-            onChange={(e) => setSelectedOperation(e.target.value as 'summarize' | 'rewrite' | 'ideate')}
-            className="w-full p-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="summarize">📝 Summarize</option>
-            <option value="rewrite">✏️ Rewrite</option>
-            <option value="ideate">💡 Ideate</option>
-          </select>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { value: 'summarize', label: 'Summarize', icon: '📝', desc: 'Brief overview' },
+              { value: 'rewrite', label: 'Rewrite', icon: '✏️', desc: 'Improve text' },
+              { value: 'ideate', label: 'Ideate', icon: '💡', desc: 'Generate ideas' }
+            ].map((op) => (
+              <button
+                key={op.value}
+                onClick={() => setSelectedOperation(op.value as 'summarize' | 'rewrite' | 'ideate')}
+                className={`p-2 rounded-lg border-2 transition-all duration-200 text-xs ${
+                  selectedOperation === op.value
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className="text-sm mb-1">{op.icon}</div>
+                <div className="font-medium">{op.label}</div>
+                <div className="text-xs text-gray-500">{op.desc}</div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -129,13 +179,27 @@ const Popup: React.FC = () => {
           <button
             onClick={handleProcessText}
             disabled={isProcessing || !inputText.trim()}
-            className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-md text-sm font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg text-sm font-medium hover:from-blue-700 hover:to-purple-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
           >
-            {isProcessing ? '🔄 Processing...' : '🚀 Run MuseFlow'}
+            {isProcessing ? (
+              <div className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2">
+                <span>🚀</span>
+                <span>Run MuseFlow</span>
+              </div>
+            )}
           </button>
           <button
             onClick={handleClearAll}
-            className="px-3 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="px-4 py-3 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-gray-300 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+            title="Clear all"
           >
             🗑️
           </button>
@@ -144,11 +208,20 @@ const Popup: React.FC = () => {
         {/* Output Section */}
         {output && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              AI Response:
-            </label>
-            <div className="bg-gray-50 border border-gray-200 rounded-md p-3 min-h-20 max-h-32 overflow-y-auto">
-              <pre className="whitespace-pre-wrap text-xs text-gray-800 font-sans">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-700">
+                AI Response:
+              </label>
+              <button
+                onClick={() => navigator.clipboard.writeText(output)}
+                className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
+                title="Copy to clipboard"
+              >
+                📋 Copy
+              </button>
+            </div>
+            <div className="bg-gradient-to-br from-gray-50 to-blue-50 border border-gray-200 rounded-lg p-4 min-h-20 max-h-32 overflow-y-auto">
+              <pre className="whitespace-pre-wrap text-xs text-gray-800 font-sans leading-relaxed">
                 {output}
               </pre>
             </div>
@@ -169,30 +242,52 @@ const Popup: React.FC = () => {
         )}
       </div>
 
+      {/* Stats Panel */}
+      {inputText && (
+        <StatsPanel 
+          inputText={inputText}
+          output={output}
+          selectedOperation={selectedOperation}
+        />
+      )}
+
+      {/* Quick Actions */}
+      <QuickActions 
+        onAction={handleQuickAction}
+        inputText={inputText}
+      />
+
       {/* Cached Responses */}
       {cachedResponses.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm p-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">
-            📚 Recent
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 p-5">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <span>📚</span>
+            <span>Recent Responses</span>
+            <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+              {cachedResponses.length}
+            </span>
           </h3>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {cachedResponses.map((response, index) => (
               <div
                 key={index}
-                className="p-2 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer"
+                className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200 group"
                 onClick={() => handleLoadCachedResponse(response)}
               >
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-xs font-medium text-blue-600 capitalize">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-xs font-medium text-blue-600 capitalize bg-blue-50 px-2 py-1 rounded-full">
                     {response.operation}
                   </span>
                   <span className="text-xs text-gray-500">
                     {new Date(response.timestamp).toLocaleTimeString()}
                   </span>
                 </div>
-                <p className="text-xs text-gray-700 line-clamp-2">
-                  {response.input.substring(0, 60)}...
+                <p className="text-xs text-gray-700 line-clamp-2 group-hover:text-gray-900 transition-colors">
+                  {response.input.substring(0, 80)}...
                 </p>
+                <div className="mt-2 text-xs text-gray-400">
+                  Click to load →
+                </div>
               </div>
             ))}
           </div>
@@ -200,9 +295,16 @@ const Popup: React.FC = () => {
       )}
 
       {/* Footer */}
-      <div className="mt-4 text-center text-xs text-gray-500">
-        <p>MuseFlow v1.0.0</p>
-        <p>Chrome AI Challenge 2025</p>
+      <div className="mt-6 text-center">
+        <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-white/30">
+          <p className="text-xs text-gray-600 font-medium">MuseFlow v1.0.0</p>
+          <p className="text-xs text-gray-500">Chrome AI Challenge 2025</p>
+          <div className="mt-2 flex justify-center gap-2">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+            <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+          </div>
+        </div>
       </div>
     </div>
   );

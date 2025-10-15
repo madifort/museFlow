@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "MuseFlow – Chrome AI Creative Assistant",
+  "description": "An AI-powered Chrome companion for summarizing, rewriting, and ideating content using Chrome's built-in AI APIs.",
+  "version": "1.0.0",
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": ["scripting", "storage", "activeTab", "contextMenus"],
+  "background": {
+    "service_worker": "src/background/serviceWorker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/extractor.js"]
+    }
+  ],
+  "host_permissions": ["<all_urls>"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "options_page": "options.html"
+}
