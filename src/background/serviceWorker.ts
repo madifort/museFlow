@@ -17,10 +17,20 @@ interface AIResponseMessage {
   response: string;
 }
 
+interface ProcessTextMessage {
+  type: "PROCESS_TEXT";
+  data: {
+    text: string;
+    operation: "summarize" | "rewrite" | "ideate" | "translate";
+    options?: any;
+  };
+}
+
 // Mock Chrome AI API - replace with real implementation later
 async function fakeChromeAI(
-  operation: "summarize" | "rewrite" | "ideate",
+  operation: "summarize" | "rewrite" | "ideate" | "translate",
   content: string,
+  options?: any,
 ): Promise<string> {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -29,6 +39,7 @@ async function fakeChromeAI(
     summarize: `Summarize this content clearly and concisely:\n\n${content}`,
     rewrite: `Rewrite this content to be more engaging and clear:\n\n${content}`,
     ideate: `Generate creative ideas and suggestions based on this content:\n\n${content}`,
+    translate: `Translate this content accurately while preserving meaning:\n\n${content}`,
   };
 
   // Mock responses based on operation type
@@ -42,21 +53,48 @@ async function fakeChromeAI(
       )}\n\nThis rewritten version improves clarity and engagement while maintaining the original meaning.`,
     ideate:
       "**Creative Ideas:**\n\n💡 **Expand on this topic** - Consider diving deeper into the technical aspects\n🎯 **Practical applications** - How can this be applied in real-world scenarios?\n🔍 **Related concepts** - Explore connections to other related topics\n📊 **Data visualization** - Create charts or diagrams to illustrate key points",
+    translate: `**Translation:**\n\n${content}\n\n[Translated content would appear here]\n\nNote: This is a mock translation. In the full version, this would show the actual translated text based on the selected languages.`,
   };
 
   return mockResponses[operation];
 }
 
-// Listen for messages from content scripts
+// Listen for messages from content scripts and popup
 chrome.runtime.onMessage.addListener(
-  (message: ContextMessage, sender, sendResponse) => {
+  (message: ContextMessage | ProcessTextMessage, sender, sendResponse) => {
     if (message.type === "CONTEXT_CAPTURED") {
       handleContextCapture(message.data);
+    } else if (message.type === "PROCESS_TEXT") {
+      handleProcessText(message.data, sendResponse);
     }
 
     return true; // Keep message channel open for async response
   },
 );
+
+async function handleProcessText(
+  data: ProcessTextMessage["data"],
+  sendResponse: (response?: any) => void,
+) {
+  try {
+    console.log("MuseFlow: Processing text from popup:", data);
+
+    // Build the prompt using our utility
+    const prompt = buildPrompt(data.operation, data.text);
+
+    // Simulate Chrome AI API call
+    const response = await fakeChromeAI(data.operation, data.text, data.options);
+
+    // Cache the response
+    await cacheResponse(data.operation, data.text, response);
+
+    // Send response back to popup
+    sendResponse({ response });
+  } catch (error) {
+    console.error("MuseFlow: Error processing text:", error);
+    sendResponse({ error: "Failed to process text" });
+  }
+}
 
 async function handleContextCapture(data: ContextMessage["data"]) {
   try {
