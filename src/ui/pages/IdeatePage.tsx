@@ -1,55 +1,62 @@
-import React, { useState } from 'react';
-import { PageType } from '../Dashboard';
-import { PageLayout } from '../components/PageLayout';
-import StatsPanel from '../components/StatsPanel';
-import { useKeyboardShortcuts, createMuseFlowShortcuts } from '../hooks/useKeyboardShortcuts';
+import React, { useState } from "react";
+import { PageType } from "../Dashboard";
+import { PageLayout } from "../components/PageLayout";
+import StatsPanel from "../components/StatsPanel";
+import {
+  useKeyboardShortcuts,
+  createMuseFlowShortcuts,
+} from "../hooks/useKeyboardShortcuts";
 
 interface IdeatePageProps {
   onNavigate: (page: PageType) => void;
 }
 
 export const IdeatePage: React.FC<IdeatePageProps> = ({ onNavigate }) => {
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [output, setOutput] = useState('');
-  const [ideationType, setIdeationType] = useState<'brainstorm' | 'expand' | 'innovate'>('brainstorm');
-  const [focusArea, setFocusArea] = useState('general');
+  const [output, setOutput] = useState("");
+  const [ideationType, setIdeationType] = useState<
+    "brainstorm" | "expand" | "innovate"
+  >("brainstorm");
+  const [focusArea, setFocusArea] = useState("general");
 
   const handleProcessText = async () => {
     if (!inputText.trim()) {
-      alert('Please enter some text to ideate from');
+      alert("Please enter some text to ideate from");
       return;
     }
 
     setIsProcessing(true);
-    setOutput('');
+    setOutput("");
 
     try {
       const response = await chrome.runtime.sendMessage({
-        type: 'PROCESS_TEXT',
+        type: "PROCESS_TEXT",
         data: {
           text: inputText,
-          operation: 'ideate',
-          options: { ideationType, focusArea }
+          operation: "ideate",
+          options: { ideationType, focusArea },
         },
       });
 
       if (response && response.response) {
         setOutput(response.response);
       } else {
-        setOutput('Ideation completed! This is a mock response in the MVP version.');
+        setOutput(
+          "Ideation completed! This is a mock response in the MVP version.",
+        );
       }
     } catch (error) {
-      console.error('Error processing text:', error);
-      setOutput('Error processing text. Please try again.');
+      console.error("Error processing text:", error);
+      setOutput("Error processing text. Please try again.");
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleClearAll = () => {
-    setInputText('');
-    setOutput('');
+    setInputText("");
+    setOutput("");
   };
 
   const handleCopyOutput = () => {
@@ -86,17 +93,32 @@ export const IdeatePage: React.FC<IdeatePageProps> = ({ onNavigate }) => {
             </label>
             <div className="space-y-2">
               {[
-                { value: 'brainstorm', label: 'Brainstorm', desc: 'Generate many ideas', icon: '🧠' },
-                { value: 'expand', label: 'Expand', desc: 'Develop existing concepts', icon: '📈' },
-                { value: 'innovate', label: 'Innovate', desc: 'Breakthrough thinking', icon: '🚀' }
+                {
+                  value: "brainstorm",
+                  label: "Brainstorm",
+                  desc: "Generate many ideas",
+                  icon: "🧠",
+                },
+                {
+                  value: "expand",
+                  label: "Expand",
+                  desc: "Develop existing concepts",
+                  icon: "📈",
+                },
+                {
+                  value: "innovate",
+                  label: "Innovate",
+                  desc: "Breakthrough thinking",
+                  icon: "🚀",
+                },
               ].map((type) => (
                 <button
                   key={type.value}
                   onClick={() => setIdeationType(type.value as any)}
                   className={`w-full p-3 rounded-lg border-2 transition-all duration-200 text-left ${
                     ideationType === type.value
-                      ? 'border-pink-500 bg-pink-50 text-pink-700'
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                      ? "border-pink-500 bg-pink-50 text-pink-700"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -135,7 +157,10 @@ export const IdeatePage: React.FC<IdeatePageProps> = ({ onNavigate }) => {
 
         {/* Input Section */}
         <div>
-          <label htmlFor="input-text" className="block text-sm font-medium text-gray-700 dark:text-white mb-2">
+          <label
+            htmlFor="input-text"
+            className="block text-sm font-medium text-gray-700 dark:text-white mb-2"
+          >
             Content to ideate from:
           </label>
           <div className="relative">
@@ -163,9 +188,25 @@ export const IdeatePage: React.FC<IdeatePageProps> = ({ onNavigate }) => {
           >
             {isProcessing ? (
               <div className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="animate-spin h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 Generating Ideas...
               </div>
@@ -176,7 +217,7 @@ export const IdeatePage: React.FC<IdeatePageProps> = ({ onNavigate }) => {
               </div>
             )}
           </button>
-          
+
           <button
             onClick={handleClearAll}
             className="px-4 py-3 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-gray-300 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all duration-200"
@@ -225,7 +266,9 @@ export const IdeatePage: React.FC<IdeatePageProps> = ({ onNavigate }) => {
             <span>Ideation Tips</span>
           </h4>
           <ul className="text-sm text-gray-600 space-y-1">
-            <li>• Start with broad concepts and narrow down to specific ideas</li>
+            <li>
+              • Start with broad concepts and narrow down to specific ideas
+            </li>
             <li>• Consider multiple perspectives and viewpoints</li>
             <li>• Think about practical applications and implementation</li>
             <li>• Explore both conventional and unconventional approaches</li>

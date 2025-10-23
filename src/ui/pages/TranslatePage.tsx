@@ -1,71 +1,78 @@
-import React, { useState } from 'react';
-import { PageType } from '../Dashboard';
-import { PageLayout } from '../components/PageLayout';
-import StatsPanel from '../components/StatsPanel';
-import { useKeyboardShortcuts, createMuseFlowShortcuts } from '../hooks/useKeyboardShortcuts';
+import React, { useState } from "react";
+import { PageType } from "../Dashboard";
+import { PageLayout } from "../components/PageLayout";
+import StatsPanel from "../components/StatsPanel";
+import {
+  useKeyboardShortcuts,
+  createMuseFlowShortcuts,
+} from "../hooks/useKeyboardShortcuts";
 
 interface TranslatePageProps {
   onNavigate: (page: PageType) => void;
 }
 
 export const TranslatePage: React.FC<TranslatePageProps> = ({ onNavigate }) => {
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [output, setOutput] = useState('');
-  const [sourceLanguage, setSourceLanguage] = useState('auto');
-  const [targetLanguage, setTargetLanguage] = useState('en');
-  const [translationMode, setTranslationMode] = useState<'standard' | 'formal' | 'casual'>('standard');
+  const [output, setOutput] = useState("");
+  const [sourceLanguage, setSourceLanguage] = useState("auto");
+  const [targetLanguage, setTargetLanguage] = useState("en");
+  const [translationMode, setTranslationMode] = useState<
+    "standard" | "formal" | "casual"
+  >("standard");
 
   const languages = [
-    { code: 'auto', name: 'Auto-detect', flag: '🌍' },
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'es', name: 'Spanish', flag: '🇪🇸' },
-    { code: 'fr', name: 'French', flag: '🇫🇷' },
-    { code: 'de', name: 'German', flag: '🇩🇪' },
-    { code: 'it', name: 'Italian', flag: '🇮🇹' },
-    { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
-    { code: 'ru', name: 'Russian', flag: '🇷🇺' },
-    { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
-    { code: 'ko', name: 'Korean', flag: '🇰🇷' },
-    { code: 'zh', name: 'Chinese', flag: '🇨🇳' },
-    { code: 'ar', name: 'Arabic', flag: '🇸🇦' }
+    { code: "auto", name: "Auto-detect", flag: "🌍" },
+    { code: "en", name: "English", flag: "🇺🇸" },
+    { code: "es", name: "Spanish", flag: "🇪🇸" },
+    { code: "fr", name: "French", flag: "🇫🇷" },
+    { code: "de", name: "German", flag: "🇩🇪" },
+    { code: "it", name: "Italian", flag: "🇮🇹" },
+    { code: "pt", name: "Portuguese", flag: "🇵🇹" },
+    { code: "ru", name: "Russian", flag: "🇷🇺" },
+    { code: "ja", name: "Japanese", flag: "🇯🇵" },
+    { code: "ko", name: "Korean", flag: "🇰🇷" },
+    { code: "zh", name: "Chinese", flag: "🇨🇳" },
+    { code: "ar", name: "Arabic", flag: "🇸🇦" },
   ];
 
   const handleProcessText = async () => {
     if (!inputText.trim()) {
-      alert('Please enter some text to translate');
+      alert("Please enter some text to translate");
       return;
     }
 
     setIsProcessing(true);
-    setOutput('');
+    setOutput("");
 
     try {
       const response = await chrome.runtime.sendMessage({
-        type: 'PROCESS_TEXT',
+        type: "PROCESS_TEXT",
         data: {
           text: inputText,
-          operation: 'translate',
-          options: { sourceLanguage, targetLanguage, translationMode }
+          operation: "translate",
+          options: { sourceLanguage, targetLanguage, translationMode },
         },
       });
 
       if (response && response.response) {
         setOutput(response.response);
       } else {
-        setOutput('Translation completed! This is a mock response in the MVP version.');
+        setOutput(
+          "Translation completed! This is a mock response in the MVP version.",
+        );
       }
     } catch (error) {
-      console.error('Error processing text:', error);
-      setOutput('Error processing text. Please try again.');
+      console.error("Error processing text:", error);
+      setOutput("Error processing text. Please try again.");
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleClearAll = () => {
-    setInputText('');
-    setOutput('');
+    setInputText("");
+    setOutput("");
   };
 
   const handleCopyOutput = () => {
@@ -120,17 +127,32 @@ export const TranslatePage: React.FC<TranslatePageProps> = ({ onNavigate }) => {
             </label>
             <div className="space-y-2">
               {[
-                { value: 'standard', label: 'Standard', desc: 'Balanced', icon: '⚖️' },
-                { value: 'formal', label: 'Formal', desc: 'Professional', icon: '👔' },
-                { value: 'casual', label: 'Casual', desc: 'Conversational', icon: '😊' }
+                {
+                  value: "standard",
+                  label: "Standard",
+                  desc: "Balanced",
+                  icon: "⚖️",
+                },
+                {
+                  value: "formal",
+                  label: "Formal",
+                  desc: "Professional",
+                  icon: "👔",
+                },
+                {
+                  value: "casual",
+                  label: "Casual",
+                  desc: "Conversational",
+                  icon: "😊",
+                },
               ].map((mode) => (
                 <button
                   key={mode.value}
                   onClick={() => setTranslationMode(mode.value as any)}
                   className={`w-full p-2 rounded-lg border-2 transition-all duration-200 text-center ${
                     translationMode === mode.value
-                      ? 'border-orange-500 bg-orange-50 text-orange-700'
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                      ? "border-orange-500 bg-orange-50 text-orange-700"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
                   <div className="text-sm mb-1">{mode.icon}</div>
@@ -150,11 +172,13 @@ export const TranslatePage: React.FC<TranslatePageProps> = ({ onNavigate }) => {
               onChange={(e) => setTargetLanguage(e.target.value)}
               className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-gray-50/50 dark:bg-white dark:text-black"
             >
-              {languages.filter(lang => lang.code !== 'auto').map((lang) => (
-                <option key={lang.code} value={lang.code}>
-                  {lang.flag} {lang.name}
-                </option>
-              ))}
+              {languages
+                .filter((lang) => lang.code !== "auto")
+                .map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.flag} {lang.name}
+                  </option>
+                ))}
             </select>
           </div>
         </div>
@@ -163,7 +187,7 @@ export const TranslatePage: React.FC<TranslatePageProps> = ({ onNavigate }) => {
         <div className="flex justify-center">
           <button
             onClick={() => {
-              if (sourceLanguage !== 'auto') {
+              if (sourceLanguage !== "auto") {
                 const temp = sourceLanguage;
                 setSourceLanguage(targetLanguage);
                 setTargetLanguage(temp);
@@ -172,15 +196,28 @@ export const TranslatePage: React.FC<TranslatePageProps> = ({ onNavigate }) => {
             className="p-2 rounded-lg bg-orange-100 hover:bg-orange-200 transition-colors"
             title="Swap languages"
           >
-            <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            <svg
+              className="w-5 h-5 text-orange-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+              />
             </svg>
           </button>
         </div>
 
         {/* Input Section */}
         <div>
-          <label htmlFor="input-text" className="block text-sm font-medium text-gray-700 dark:text-white mb-2">
+          <label
+            htmlFor="input-text"
+            className="block text-sm font-medium text-gray-700 dark:text-white mb-2"
+          >
             Text to translate:
           </label>
           <div className="relative">
@@ -208,9 +245,25 @@ export const TranslatePage: React.FC<TranslatePageProps> = ({ onNavigate }) => {
           >
             {isProcessing ? (
               <div className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="animate-spin h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 Translating...
               </div>
@@ -221,7 +274,7 @@ export const TranslatePage: React.FC<TranslatePageProps> = ({ onNavigate }) => {
               </div>
             )}
           </button>
-          
+
           <button
             onClick={handleClearAll}
             className="px-4 py-3 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-gray-300 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-200"

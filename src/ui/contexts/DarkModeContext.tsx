@@ -1,16 +1,18 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface DarkModeContextType {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
 }
 
-const DarkModeContext = createContext<DarkModeContextType | undefined>(undefined);
+const DarkModeContext = createContext<DarkModeContextType | undefined>(
+  undefined,
+);
 
 export const useDarkMode = () => {
   const context = useContext(DarkModeContext);
   if (context === undefined) {
-    throw new Error('useDarkMode must be used within a DarkModeProvider');
+    throw new Error("useDarkMode must be used within a DarkModeProvider");
   }
   return context;
 };
@@ -19,30 +21,32 @@ interface DarkModeProviderProps {
   children: React.ReactNode;
 }
 
-export const DarkModeProvider: React.FC<DarkModeProviderProps> = ({ children }) => {
+export const DarkModeProvider: React.FC<DarkModeProviderProps> = ({
+  children,
+}) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check localStorage first, then system preference
-    const saved = localStorage.getItem('museflow-dark-mode');
+    const saved = localStorage.getItem("museflow-dark-mode");
     if (saved !== null) {
       return JSON.parse(saved);
     }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
 
   useEffect(() => {
     // Save to localStorage
-    localStorage.setItem('museflow-dark-mode', JSON.stringify(isDarkMode));
-    
+    localStorage.setItem("museflow-dark-mode", JSON.stringify(isDarkMode));
+
     // Update document class for global dark mode styles
     if (isDarkMode) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
     }
   }, [isDarkMode]);
 
   const toggleDarkMode = () => {
-    setIsDarkMode(prev => !prev);
+    setIsDarkMode((prev) => !prev);
   };
 
   return (

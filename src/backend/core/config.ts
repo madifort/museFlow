@@ -7,7 +7,7 @@ export interface Config {
   /** AI provider configuration */
   ai: {
     /** Preferred AI provider */
-    provider: 'chrome' | 'openai' | 'gemini';
+    provider: "chrome" | "openai" | "gemini";
     /** OpenAI API configuration */
     openai: {
       apiKey?: string;
@@ -24,7 +24,7 @@ export interface Config {
       model: string;
     };
   };
-  
+
   /** Text processing limits */
   limits: {
     /** Maximum text length for processing */
@@ -34,7 +34,7 @@ export interface Config {
     /** Cache TTL in milliseconds */
     cacheTtl: number;
   };
-  
+
   /** Feature flags */
   features: {
     /** Enable caching */
@@ -51,18 +51,18 @@ export interface Config {
  */
 export const defaultConfig: Config = {
   ai: {
-    provider: 'chrome',
+    provider: "chrome",
     openai: {
-      apiKey: process.env.OPENAI_API_KEY || '',
-      model: 'gpt-3.5-turbo',
-      baseUrl: 'https://api.openai.com/v1',
+      apiKey: process.env.OPENAI_API_KEY || "",
+      model: "gpt-3.5-turbo",
+      baseUrl: "https://api.openai.com/v1",
     },
     chrome: {
-      model: 'gemini-pro',
+      model: "gemini-pro",
     },
     gemini: {
-      apiKey: process.env.GEMINI_API_KEY || '',
-      model: 'gemini-pro',
+      apiKey: process.env.GEMINI_API_KEY || "",
+      model: "gemini-pro",
     },
   },
   limits: {
@@ -82,10 +82,10 @@ export const defaultConfig: Config = {
  */
 export async function getConfig(): Promise<Config> {
   try {
-    const result = await chrome.storage.sync.get(['config']);
+    const result = await chrome.storage.sync.get(["config"]);
     return { ...defaultConfig, ...result.config };
   } catch (error) {
-    console.warn('Failed to load config from storage, using defaults:', error);
+    console.warn("Failed to load config from storage, using defaults:", error);
     return defaultConfig;
   }
 }
@@ -99,7 +99,7 @@ export async function saveConfig(config: Partial<Config>): Promise<void> {
     const newConfig = { ...currentConfig, ...config };
     await chrome.storage.sync.set({ config: newConfig });
   } catch (error) {
-    console.error('Failed to save config to storage:', error);
+    console.error("Failed to save config to storage:", error);
     throw error;
   }
 }

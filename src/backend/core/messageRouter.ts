@@ -3,15 +3,23 @@
  * Handles Chrome runtime messaging and routes requests to appropriate AI handlers
  */
 
-import { logger } from '../utils/logger';
-import { initializeLogging } from '../utils/logger';
-import { initializeSettings } from '../storage/settings';
-import { handleSummarize, SummarizeOptions } from '../ai/summarize';
-import { handleRewrite, RewriteOptions } from '../ai/rewrite';
-import { handleIdeate, IdeateOptions } from '../ai/ideate';
-import { handleTranslate, TranslateOptions } from '../ai/translate';
+import { logger, initializeLogging } from "../utils/logger";
+import { initializeSettings } from "../storage/settings";
+import { handleSummarize, SummarizeOptions } from "../ai/summarize";
+import { handleRewrite, RewriteOptions } from "../ai/rewrite";
+import { handleIdeate, IdeateOptions } from "../ai/ideate";
+import { handleTranslate, TranslateOptions } from "../ai/translate";
 
-export type ActionType = 'summarize' | 'rewrite' | 'ideate' | 'translate' | 'ping' | 'getSettings' | 'updateSettings' | 'clearCache';
+export type ActionType =
+  | "summarize"
+  | "rewrite"
+  | "ideate"
+  | "translate"
+  | "verifyKey"
+  | "ping"
+  | "getSettings"
+  | "updateSettings"
+  | "clearCache";
 
 export interface MessageRequest {
   /** Action to perform */
@@ -19,13 +27,18 @@ export interface MessageRequest {
   /** Input text to process */
   text?: string;
   /** Options for the action */
-  options?: SummarizeOptions | RewriteOptions | IdeateOptions | TranslateOptions | any;
+  options?:
+    | SummarizeOptions
+    | RewriteOptions
+    | IdeateOptions
+    | TranslateOptions
+    | any;
   /** Request ID for tracking */
   requestId?: string;
   /** Tab ID for context */
   tabId?: number;
   /** Source of the request */
-  source?: 'content' | 'popup' | 'options' | 'background';
+  source?: "content" | "popup" | "options" | "background";
 }
 
 export interface MessageResponse {
@@ -53,13 +66,13 @@ export async function initializeMessageRouter(): Promise<void> {
     // Initialize logging and settings
     await initializeLogging();
     await initializeSettings();
-    
+
     // Set up message listener
     chrome.runtime.onMessage.addListener(handleMessage);
-    
-    logger.info('Message router initialized successfully');
+
+    logger.info("Message router initialized successfully");
   } catch (error) {
-    logger.error('Failed to initialize message router', error as Error);
+    logger.error("Failed to initialize message router", error as Error);
     throw error;
   }
 }
@@ -70,23 +83,23 @@ export async function initializeMessageRouter(): Promise<void> {
 async function handleMessage(
   request: MessageRequest,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response: MessageResponse) => void
+  sendResponse: (response: MessageResponse) => void,
 ): Promise<boolean> {
   const startTime = Date.now();
   const requestId = request.requestId || generateRequestId();
-  
+
   try {
-    logger.debug('Message received', {
+    logger.debug("Message received", {
       action: request.action,
       requestId,
       source: request.source,
       tabId: request.tabId,
-      senderId: sender.tab?.id
+      senderId: sender.tab?.id,
     });
 
     // Validate request
     if (!request.action) {
-      throw new Error('Action is required');
+      throw new Error("Action is required");
     }
 
     let result: any;
@@ -98,38 +111,54 @@ async function handleMessage(
 
     // Route to appropriate handler
     switch (request.action) {
-      case 'ping':
+      case "ping":
         result = await handlePing();
         break;
-        
-      case 'summarize':
-        result = await handleSummarizeAction(request.text!, request.options as SummarizeOptions);
+
+      case "summarize":
+        result = await handleSummarizeAction(
+          request.text!,
+          request.options as SummarizeOptions,
+        );
         break;
-        
-      case 'rewrite':
-        result = await handleRewriteAction(request.text!, request.options as RewriteOptions);
+
+      case "rewrite":
+        result = await handleRewriteAction(
+          request.text!,
+          request.options as RewriteOptions,
+        );
         break;
-        
-      case 'ideate':
-        result = await handleIdeateAction(request.text!, request.options as IdeateOptions);
+
+      case "ideate":
+        result = await handleIdeateAction(
+          request.text!,
+          request.options as IdeateOptions,
+        );
         break;
-        
-      case 'translate':
-        result = await handleTranslateAction(request.text!, request.options as TranslateOptions);
+
+      case "translate":
+        result = await handleTranslateAction(
+          request.text!,
+          request.options as TranslateOptions,
+        );
         break;
-        
-      case 'getSettings':
+
+      case "verifyKey":
+        result = await handleVerifyKey(request.options);
+        break;
+
+      case "getSettings":
         result = await handleGetSettings();
         break;
-        
-      case 'updateSettings':
+
+      case "updateSettings":
         result = await handleUpdateSettings(request.options);
         break;
-        
-      case 'clearCache':
+
+      case "clearCache":
         result = await handleClearCache();
         break;
-        
+
       default:
         throw new Error(`Unknown action: ${request.action}`);
     }
@@ -141,7 +170,7 @@ async function handleMessage(
       metadata,
     };
 
-    logger.info('Message processed successfully', {
+    logger.info("Message processed successfully", {
       action: request.action,
       requestId,
       processingTime: metadata.processingTime,
@@ -149,11 +178,10 @@ async function handleMessage(
 
     sendResponse(response);
     return true;
-
   } catch (error) {
     const processingTime = Date.now() - startTime;
-    
-    logger.error('Message processing failed', error as Error, {
+
+    logger.error("Message processing failed", error as Error, {
       action: request.action,
       requestId,
       processingTime,
@@ -161,7 +189,7 @@ async function handleMessage(
 
     const response: MessageResponse = {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      error: error instanceof Error ? error.message : "Unknown error occurred",
       requestId,
       metadata: {
         processingTime,
@@ -180,7 +208,7 @@ async function handleMessage(
  */
 async function handlePing(): Promise<{ status: string; timestamp: string }> {
   return {
-    status: 'pong',
+    status: "pong",
     timestamp: new Date().toISOString(),
   };
 }
@@ -188,9 +216,12 @@ async function handlePing(): Promise<{ status: string; timestamp: string }> {
 /**
  * Handle summarize action
  */
-async function handleSummarizeAction(text: string, options: SummarizeOptions = {}): Promise<any> {
+async function handleSummarizeAction(
+  text: string,
+  options: SummarizeOptions = {},
+): Promise<any> {
   if (!text || text.trim().length === 0) {
-    throw new Error('Text is required for summarization');
+    throw new Error("Text is required for summarization");
   }
 
   return await handleSummarize(text, options);
@@ -199,9 +230,12 @@ async function handleSummarizeAction(text: string, options: SummarizeOptions = {
 /**
  * Handle rewrite action
  */
-async function handleRewriteAction(text: string, options: RewriteOptions = {}): Promise<any> {
+async function handleRewriteAction(
+  text: string,
+  options: RewriteOptions = {},
+): Promise<any> {
   if (!text || text.trim().length === 0) {
-    throw new Error('Text is required for rewriting');
+    throw new Error("Text is required for rewriting");
   }
 
   return await handleRewrite(text, options);
@@ -210,9 +244,12 @@ async function handleRewriteAction(text: string, options: RewriteOptions = {}): 
 /**
  * Handle ideate action
  */
-async function handleIdeateAction(text: string, options: IdeateOptions = {}): Promise<any> {
+async function handleIdeateAction(
+  text: string,
+  options: IdeateOptions = {},
+): Promise<any> {
   if (!text || text.trim().length === 0) {
-    throw new Error('Text is required for ideation');
+    throw new Error("Text is required for ideation");
   }
 
   return await handleIdeate(text, options);
@@ -221,9 +258,12 @@ async function handleIdeateAction(text: string, options: IdeateOptions = {}): Pr
 /**
  * Handle translate action
  */
-async function handleTranslateAction(text: string, options: TranslateOptions = {}): Promise<any> {
+async function handleTranslateAction(
+  text: string,
+  options: TranslateOptions = {},
+): Promise<any> {
   if (!text || text.trim().length === 0) {
-    throw new Error('Text is required for translation');
+    throw new Error("Text is required for translation");
   }
 
   return await handleTranslate(text, options);
@@ -233,7 +273,7 @@ async function handleTranslateAction(text: string, options: TranslateOptions = {
  * Handle get settings action
  */
 async function handleGetSettings(): Promise<any> {
-  const { settingsManager } = await import('../storage/settings');
+  const { settingsManager } = await import("../storage/settings");
   return settingsManager.getSettings();
 }
 
@@ -241,26 +281,46 @@ async function handleGetSettings(): Promise<any> {
  * Handle update settings action
  */
 async function handleUpdateSettings(settings: any): Promise<any> {
-  const { settingsManager } = await import('../storage/settings');
-  
+  const { settingsManager } = await import("../storage/settings");
+
   if (settings.user) {
     await settingsManager.updateUserSettings(settings.user);
   }
-  
+
   if (settings.providers) {
     await settingsManager.updateProviderSettings(settings.providers);
   }
-  
+
   return settingsManager.getSettings();
+}
+
+/**
+ * Handle verify key action
+ */
+async function handleVerifyKey(
+  options: any,
+): Promise<{ valid: boolean; provider?: string }> {
+  const { verifyKey } = await import("../utils/chromeWrapper");
+
+  if (!options.provider || !options.apiKey) {
+    throw new Error("Provider and API key are required");
+  }
+
+  const valid = await verifyKey(options.provider, options.apiKey);
+
+  return {
+    valid,
+    provider: options.provider,
+  };
 }
 
 /**
  * Handle clear cache action
  */
 async function handleClearCache(): Promise<{ message: string }> {
-  const { clearCache } = await import('../storage/cache');
+  const { clearCache } = await import("../storage/cache");
   await clearCache();
-  return { message: 'Cache cleared successfully' };
+  return { message: "Cache cleared successfully" };
 }
 
 /**
@@ -275,14 +335,19 @@ function generateRequestId(): string {
  */
 export async function sendMessageToContentScript(
   tabId: number,
-  message: any
+  message: any,
 ): Promise<any> {
   try {
     const response = await chrome.tabs.sendMessage(tabId, message);
-    logger.debug('Message sent to content script', { tabId, messageType: message.type });
+    logger.debug("Message sent to content script", {
+      tabId,
+      messageType: message.type,
+    });
     return response;
   } catch (error) {
-    logger.error('Failed to send message to content script', error as Error, { tabId });
+    logger.error("Failed to send message to content script", error as Error, {
+      tabId,
+    });
     throw error;
   }
 }
@@ -293,10 +358,10 @@ export async function sendMessageToContentScript(
 export async function sendMessageToPopup(message: any): Promise<any> {
   try {
     const response = await chrome.runtime.sendMessage(message);
-    logger.debug('Message sent to popup', { messageType: message.type });
+    logger.debug("Message sent to popup", { messageType: message.type });
     return response;
   } catch (error) {
-    logger.error('Failed to send message to popup', error as Error);
+    logger.error("Failed to send message to popup", error as Error);
     throw error;
   }
 }
@@ -307,21 +372,26 @@ export async function sendMessageToPopup(message: any): Promise<any> {
 export async function broadcastMessage(message: any): Promise<void> {
   try {
     const tabs = await chrome.tabs.query({});
-    
+
     for (const tab of tabs) {
       if (tab.id) {
         try {
           await chrome.tabs.sendMessage(tab.id, message);
         } catch (error) {
           // Ignore errors for tabs that don't have content scripts
-          logger.debug('Failed to send message to tab', { tabId: tab.id, error: (error as Error).message });
+          logger.debug("Failed to send message to tab", {
+            tabId: tab.id,
+            error: (error as Error).message,
+          });
         }
       }
     }
-    
-    logger.debug('Message broadcasted to all tabs', { messageType: message.type });
+
+    logger.debug("Message broadcasted to all tabs", {
+      messageType: message.type,
+    });
   } catch (error) {
-    logger.error('Failed to broadcast message', error as Error);
+    logger.error("Failed to broadcast message", error as Error);
     throw error;
   }
 }
@@ -331,10 +401,13 @@ export async function broadcastMessage(message: any): Promise<void> {
  */
 export async function getCurrentTab(): Promise<chrome.tabs.Tab | null> {
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
     return tab || null;
   } catch (error) {
-    logger.error('Failed to get current tab', error as Error);
+    logger.error("Failed to get current tab", error as Error);
     return null;
   }
 }
@@ -344,16 +417,19 @@ export async function getCurrentTab(): Promise<chrome.tabs.Tab | null> {
  */
 export function setupTabUpdateHandler(): void {
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === 'complete' && tab.url) {
-      logger.debug('Tab updated', { tabId, url: tab.url });
-      
+    if (changeInfo.status === "complete" && tab.url) {
+      logger.debug("Tab updated", { tabId, url: tab.url });
+
       // Send tab update message to content script
       sendMessageToContentScript(tabId, {
-        type: 'tabUpdated',
+        type: "tabUpdated",
         url: tab.url,
         timestamp: new Date().toISOString(),
-      }).catch(error => {
-        logger.debug('Failed to notify content script of tab update', { tabId, error: error.message });
+      }).catch((error) => {
+        logger.debug("Failed to notify content script of tab update", {
+          tabId,
+          error: error.message,
+        });
       });
     }
   });
@@ -364,15 +440,18 @@ export function setupTabUpdateHandler(): void {
  */
 export function setupInstallHandler(): void {
   chrome.runtime.onInstalled.addListener((details) => {
-    logger.info('Extension installed/updated', { 
+    logger.info("Extension installed/updated", {
       reason: details.reason,
-      previousVersion: details.previousVersion 
+      previousVersion: details.previousVersion,
     });
-    
-    if (details.reason === 'install') {
+
+    if (details.reason === "install") {
       // Initialize settings on first install
-      initializeSettings().catch(error => {
-        logger.error('Failed to initialize settings on install', error as Error);
+      initializeSettings().catch((error) => {
+        logger.error(
+          "Failed to initialize settings on install",
+          error as Error,
+        );
       });
     }
   });
@@ -383,11 +462,14 @@ export function setupInstallHandler(): void {
  */
 export function setupStartupHandler(): void {
   chrome.runtime.onStartup.addListener(() => {
-    logger.info('Extension started');
-    
+    logger.info("Extension started");
+
     // Reinitialize on startup
-    initializeMessageRouter().catch(error => {
-      logger.error('Failed to reinitialize message router on startup', error as Error);
+    initializeMessageRouter().catch((error) => {
+      logger.error(
+        "Failed to reinitialize message router on startup",
+        error as Error,
+      );
     });
   });
 }
@@ -408,10 +490,10 @@ export async function initializeBackend(): Promise<void> {
   try {
     await initializeMessageRouter();
     setupEventHandlers();
-    
-    logger.info('MuseFlow backend initialized successfully');
+
+    logger.info("MuseFlow backend initialized successfully");
   } catch (error) {
-    logger.error('Failed to initialize MuseFlow backend', error as Error);
+    logger.error("Failed to initialize MuseFlow backend", error as Error);
     throw error;
   }
 }

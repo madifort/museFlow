@@ -1,55 +1,62 @@
-import React, { useState } from 'react';
-import { PageType } from '../Dashboard';
-import { PageLayout } from '../components/PageLayout';
-import StatsPanel from '../components/StatsPanel';
-import { useKeyboardShortcuts, createMuseFlowShortcuts } from '../hooks/useKeyboardShortcuts';
+import React, { useState } from "react";
+import { PageType } from "../Dashboard";
+import { PageLayout } from "../components/PageLayout";
+import StatsPanel from "../components/StatsPanel";
+import {
+  useKeyboardShortcuts,
+  createMuseFlowShortcuts,
+} from "../hooks/useKeyboardShortcuts";
 
 interface RewritePageProps {
   onNavigate: (page: PageType) => void;
 }
 
 export const RewritePage: React.FC<RewritePageProps> = ({ onNavigate }) => {
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [output, setOutput] = useState('');
-  const [rewriteStyle, setRewriteStyle] = useState<'professional' | 'casual' | 'creative'>('professional');
-  const [targetAudience, setTargetAudience] = useState('general');
+  const [output, setOutput] = useState("");
+  const [rewriteStyle, setRewriteStyle] = useState<
+    "professional" | "casual" | "creative"
+  >("professional");
+  const [targetAudience, setTargetAudience] = useState("general");
 
   const handleProcessText = async () => {
     if (!inputText.trim()) {
-      alert('Please enter some text to rewrite');
+      alert("Please enter some text to rewrite");
       return;
     }
 
     setIsProcessing(true);
-    setOutput('');
+    setOutput("");
 
     try {
       const response = await chrome.runtime.sendMessage({
-        type: 'PROCESS_TEXT',
+        type: "PROCESS_TEXT",
         data: {
           text: inputText,
-          operation: 'rewrite',
-          options: { rewriteStyle, targetAudience }
+          operation: "rewrite",
+          options: { rewriteStyle, targetAudience },
         },
       });
 
       if (response && response.response) {
         setOutput(response.response);
       } else {
-        setOutput('Rewrite completed! This is a mock response in the MVP version.');
+        setOutput(
+          "Rewrite completed! This is a mock response in the MVP version.",
+        );
       }
     } catch (error) {
-      console.error('Error processing text:', error);
-      setOutput('Error processing text. Please try again.');
+      console.error("Error processing text:", error);
+      setOutput("Error processing text. Please try again.");
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleClearAll = () => {
-    setInputText('');
-    setOutput('');
+    setInputText("");
+    setOutput("");
   };
 
   const handleCopyOutput = () => {
@@ -86,17 +93,32 @@ export const RewritePage: React.FC<RewritePageProps> = ({ onNavigate }) => {
             </label>
             <div className="space-y-2">
               {[
-                { value: 'professional', label: 'Professional', desc: 'Formal, business-like', icon: '👔' },
-                { value: 'casual', label: 'Casual', desc: 'Friendly, conversational', icon: '😊' },
-                { value: 'creative', label: 'Creative', desc: 'Engaging, imaginative', icon: '🎨' }
+                {
+                  value: "professional",
+                  label: "Professional",
+                  desc: "Formal, business-like",
+                  icon: "👔",
+                },
+                {
+                  value: "casual",
+                  label: "Casual",
+                  desc: "Friendly, conversational",
+                  icon: "😊",
+                },
+                {
+                  value: "creative",
+                  label: "Creative",
+                  desc: "Engaging, imaginative",
+                  icon: "🎨",
+                },
               ].map((style) => (
                 <button
                   key={style.value}
                   onClick={() => setRewriteStyle(style.value as any)}
                   className={`w-full p-3 rounded-lg border-2 transition-all duration-200 text-left ${
                     rewriteStyle === style.value
-                      ? 'border-purple-500 bg-purple-50 text-purple-700'
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                      ? "border-purple-500 bg-purple-50 text-purple-700"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -132,7 +154,10 @@ export const RewritePage: React.FC<RewritePageProps> = ({ onNavigate }) => {
 
         {/* Input Section */}
         <div>
-          <label htmlFor="input-text" className="block text-sm font-medium text-gray-700 dark:text-white mb-2">
+          <label
+            htmlFor="input-text"
+            className="block text-sm font-medium text-gray-700 dark:text-white mb-2"
+          >
             Text to rewrite:
           </label>
           <div className="relative">
@@ -160,9 +185,25 @@ export const RewritePage: React.FC<RewritePageProps> = ({ onNavigate }) => {
           >
             {isProcessing ? (
               <div className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                <svg
+                  className="animate-spin h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 Rewriting...
               </div>
@@ -173,7 +214,7 @@ export const RewritePage: React.FC<RewritePageProps> = ({ onNavigate }) => {
               </div>
             )}
           </button>
-          
+
           <button
             onClick={handleClearAll}
             className="px-4 py-3 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-gray-300 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200"

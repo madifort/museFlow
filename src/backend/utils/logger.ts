@@ -20,7 +20,9 @@ export interface LogEntry {
 
 class Logger {
   private currentLevel: LogLevel = LogLevel.INFO;
+
   private logs: LogEntry[] = [];
+
   private maxLogs = 1000;
 
   /**
@@ -68,7 +70,11 @@ class Logger {
   /**
    * Internal logging method
    */
-  private log(level: LogLevel, message: string, context?: Record<string, any>): void {
+  private log(
+    level: LogLevel,
+    message: string,
+    context?: Record<string, any>,
+  ): void {
     if (level < this.currentLevel) {
       return;
     }
@@ -88,7 +94,7 @@ class Logger {
 
     // Output to console with appropriate method
     const formattedMessage = this.formatMessage(entry);
-    
+
     switch (level) {
       case LogLevel.DEBUG:
         console.debug(formattedMessage, context);
@@ -124,19 +130,19 @@ class Logger {
    */
   private async storeInChromeStorage(entry: LogEntry): Promise<void> {
     try {
-      const result = await chrome.storage.local.get(['logs']);
+      const result = await chrome.storage.local.get(["logs"]);
       const logs = result.logs || [];
-      
+
       logs.push(entry);
-      
+
       // Keep only last 50 entries in storage
       if (logs.length > 50) {
         logs.splice(0, logs.length - 50);
       }
-      
+
       await chrome.storage.local.set({ logs });
     } catch (error) {
-      console.error('Failed to store log in Chrome storage:', error);
+      console.error("Failed to store log in Chrome storage:", error);
     }
   }
 
@@ -159,10 +165,10 @@ class Logger {
    */
   async getStoredLogs(): Promise<LogEntry[]> {
     try {
-      const result = await chrome.storage.local.get(['logs']);
+      const result = await chrome.storage.local.get(["logs"]);
       return result.logs || [];
     } catch (error) {
-      console.error('Failed to get stored logs:', error);
+      console.error("Failed to get stored logs:", error);
       return [];
     }
   }
@@ -172,9 +178,9 @@ class Logger {
    */
   async clearStoredLogs(): Promise<void> {
     try {
-      await chrome.storage.local.remove(['logs']);
+      await chrome.storage.local.remove(["logs"]);
     } catch (error) {
-      console.error('Failed to clear stored logs:', error);
+      console.error("Failed to clear stored logs:", error);
     }
   }
 }
@@ -190,17 +196,17 @@ export const logger = new Logger();
 export async function initializeLogging(): Promise<void> {
   try {
     // Try to get log level from storage
-    const result = await chrome.storage.sync.get(['logLevel']);
+    const result = await chrome.storage.sync.get(["logLevel"]);
     if (result.logLevel !== undefined) {
       logger.setLevel(result.logLevel);
     }
-    
-    logger.info('Logging initialized', { 
+
+    logger.info("Logging initialized", {
       level: LogLevel[logger.getLevel()],
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Failed to initialize logging:', error);
+    console.error("Failed to initialize logging:", error);
   }
 }
 
@@ -209,11 +215,11 @@ export async function initializeLogging(): Promise<void> {
  */
 export async function setLogLevel(level: LogLevel): Promise<void> {
   logger.setLevel(level);
-  
+
   try {
     await chrome.storage.sync.set({ logLevel: level });
-    logger.info('Log level updated', { newLevel: LogLevel[level] });
+    logger.info("Log level updated", { newLevel: LogLevel[level] });
   } catch (error) {
-    logger.error('Failed to save log level to storage', error);
+    logger.error("Failed to save log level to storage", error);
   }
 }

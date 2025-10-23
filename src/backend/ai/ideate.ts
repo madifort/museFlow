@@ -3,17 +3,17 @@
  * Handles creative ideation and brainstorming based on input text
  */
 
-import { buildPrompt, PromptOptions } from '../core/promptBuilder';
-import { callChromeAI, AIRequest } from '../utils/chromeWrapper';
-import { getCachedResponse, saveToCache } from '../storage/cache';
-import { getDefaultPromptOptions } from '../storage/settings';
-import { logger } from '../utils/logger';
+import { buildPrompt, PromptOptions } from "../core/promptBuilder";
+import { callChromeAI, AIRequest } from "../utils/chromeWrapper";
+import { getCachedResponse, saveToCache } from "../storage/cache";
+import { getDefaultPromptOptions } from "../storage/settings";
+import { logger } from "../utils/logger";
 
 export interface IdeateOptions extends PromptOptions {
   /** Number of ideas to generate */
   ideaCount?: number;
   /** Type of ideas to generate */
-  ideaType?: 'creative' | 'practical' | 'strategic' | 'innovative' | 'mixed';
+  ideaType?: "creative" | "practical" | "strategic" | "innovative" | "mixed";
   /** Context or domain for ideation */
   domain?: string;
   /** Specific focus areas */
@@ -23,7 +23,7 @@ export interface IdeateOptions extends PromptOptions {
   /** Target audience for ideas */
   audience?: string;
   /** Time frame for implementation */
-  timeframe?: 'short' | 'medium' | 'long';
+  timeframe?: "short" | "medium" | "long";
 }
 
 export interface Idea {
@@ -38,9 +38,9 @@ export interface Idea {
   /** Potential challenges */
   challenges?: string[];
   /** Estimated effort level */
-  effortLevel?: 'low' | 'medium' | 'high';
+  effortLevel?: "low" | "medium" | "high";
   /** Estimated impact level */
-  impactLevel?: 'low' | 'medium' | 'high';
+  impactLevel?: "low" | "medium" | "high";
 }
 
 export interface IdeateResult {
@@ -69,22 +69,21 @@ export interface IdeateResult {
  */
 export async function handleIdeate(
   text: string,
-  options: IdeateOptions = {}
+  options: IdeateOptions = {},
 ): Promise<IdeateResult> {
   const startTime = Date.now();
-  
+
   try {
-    logger.info('Starting ideation', { 
+    logger.info("Starting ideation", {
       textLength: text.length,
-      options: Object.keys(options)
+      options: Object.keys(options),
     });
 
     // Check cache first
-    const cacheKey = `ideate:${JSON.stringify(options)}:${text.substring(0, 100)}`;
-    const cachedResponse = await getCachedResponse(cacheKey, 'ideate');
-    
+    const cachedResponse = await getCachedResponse(text, "ideate", options);
+
     if (cachedResponse) {
-      logger.debug('Using cached ideation response');
+      logger.debug("Using cached ideation response");
       const ideas = parseIdeasFromResponse(cachedResponse.text);
       return {
         ideas,
@@ -107,12 +106,12 @@ export async function handleIdeate(
 
     // Validate input
     if (!text || text.trim().length === 0) {
-      throw new Error('Input text cannot be empty');
+      throw new Error("Input text cannot be empty");
     }
 
     if (text.length > 5000) {
-      logger.warn('Text length exceeds recommended limit, truncating...');
-      text = text.substring(0, 5000) + '...';
+      logger.warn("Text length exceeds recommended limit, truncating...");
+      text = `${text.substring(0, 5000)}...`;
     }
 
     // Build specialized prompt for ideation
@@ -127,14 +126,14 @@ export async function handleIdeate(
 
     // Call AI service
     const aiResponse = await callChromeAI(aiRequest);
-    
+
     // Parse and validate response
     const ideas = parseIdeasFromResponse(aiResponse.text);
-    
+
     // Calculate metadata
     const processingTime = Date.now() - startTime;
     const creativityScore = calculateCreativityScore(ideas);
-    
+
     const finalResult: IdeateResult = {
       ideas,
       context: {
@@ -151,18 +150,17 @@ export async function handleIdeate(
     };
 
     // Cache the response
-    await saveToCache('ideate', cacheKey, aiResponse);
+    await saveToCache("ideate", text, aiResponse, options);
 
-    logger.info('Ideation completed', {
+    logger.info("Ideation completed", {
       ideaCount: finalResult.metadata.ideaCount,
       creativityScore: finalResult.metadata.creativityScore,
       processingTime: finalResult.metadata.processingTime,
     });
 
     return finalResult;
-
   } catch (error) {
-    logger.error('Ideation failed', error as Error, {
+    logger.error("Ideation failed", error as Error, {
       textLength: text.length,
       options: Object.keys(options),
       processingTime: Date.now() - startTime,
@@ -176,22 +174,26 @@ export async function handleIdeate(
  */
 function buildIdeatePrompt(text: string, options: IdeateOptions): string {
   const ideaCount = options.ideaCount || 5;
-  const ideaTypeInstruction = getIdeaTypeInstruction(options.ideaType || 'mixed');
-  const domainInstruction = options.domain 
+  const ideaTypeInstruction = getIdeaTypeInstruction(
+    options.ideaType || "mixed",
+  );
+  const domainInstruction = options.domain
     ? ` Focus on ideas relevant to the ${options.domain} domain.`
-    : '';
-  const focusInstruction = options.focusAreas && options.focusAreas.length > 0
-    ? ` Pay special attention to: ${options.focusAreas.join(', ')}.`
-    : '';
-  const constraintsInstruction = options.constraints && options.constraints.length > 0
-    ? ` Consider these constraints: ${options.constraints.join(', ')}.`
-    : '';
+    : "";
+  const focusInstruction =
+    options.focusAreas && options.focusAreas.length > 0
+      ? ` Pay special attention to: ${options.focusAreas.join(", ")}.`
+      : "";
+  const constraintsInstruction =
+    options.constraints && options.constraints.length > 0
+      ? ` Consider these constraints: ${options.constraints.join(", ")}.`
+      : "";
   const audienceInstruction = options.audience
     ? ` Tailor ideas for a ${options.audience} audience.`
-    : '';
+    : "";
   const timeframeInstruction = options.timeframe
     ? ` Focus on ${options.timeframe}-term implementation ideas.`
-    : '';
+    : "";
 
   return `Generate creative, innovative ideas based on the following text. Think outside the box and provide practical, actionable insights.
 
@@ -219,17 +221,17 @@ Please format your response clearly with numbered ideas and organized sections.`
  */
 function getIdeaTypeInstruction(ideaType: string): string {
   switch (ideaType) {
-    case 'creative':
-      return ' Focus on highly creative, innovative, and out-of-the-box ideas.';
-    case 'practical':
-      return ' Focus on practical, implementable ideas with clear benefits.';
-    case 'strategic':
-      return ' Focus on strategic, long-term thinking and planning ideas.';
-    case 'innovative':
-      return ' Focus on breakthrough innovations and novel approaches.';
-    case 'mixed':
+    case "creative":
+      return " Focus on highly creative, innovative, and out-of-the-box ideas.";
+    case "practical":
+      return " Focus on practical, implementable ideas with clear benefits.";
+    case "strategic":
+      return " Focus on strategic, long-term thinking and planning ideas.";
+    case "innovative":
+      return " Focus on breakthrough innovations and novel approaches.";
+    case "mixed":
     default:
-      return ' Provide a mix of creative, practical, and strategic ideas.';
+      return " Provide a mix of creative, practical, and strategic ideas.";
   }
 }
 
@@ -238,90 +240,110 @@ function getIdeaTypeInstruction(ideaType: string): string {
  */
 function parseIdeasFromResponse(response: string): Idea[] {
   const ideas: Idea[] = [];
-  const lines = response.split('\n');
-  
+  const lines = response.split("\n");
+
   let currentIdea: Partial<Idea> = {};
-  let currentSection = '';
-  
+  let currentSection = "";
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    
+
     if (!line) continue;
-    
+
     // Check for new idea (numbered or titled)
     if (/^\d+\./.test(line) || /^idea\s+\d+/i.test(line)) {
       // Save previous idea if exists
       if (currentIdea.title) {
         ideas.push(currentIdea as Idea);
       }
-      
+
       // Start new idea
-      currentIdea = { title: line.replace(/^\d+\.\s*/, '').replace(/^idea\s+\d+:\s*/i, '') };
-      currentSection = '';
+      currentIdea = {
+        title: line.replace(/^\d+\.\s*/, "").replace(/^idea\s+\d+:\s*/i, ""),
+      };
+      currentSection = "";
       continue;
     }
-    
+
     // Check for section headers
-    if (line.toLowerCase().includes('description') || line.toLowerCase().includes('explanation')) {
-      currentSection = 'description';
+    if (
+      line.toLowerCase().includes("description") ||
+      line.toLowerCase().includes("explanation")
+    ) {
+      currentSection = "description";
       continue;
-    } else if (line.toLowerCase().includes('implementation') || line.toLowerCase().includes('steps')) {
-      currentSection = 'implementation';
+    } else if (
+      line.toLowerCase().includes("implementation") ||
+      line.toLowerCase().includes("steps")
+    ) {
+      currentSection = "implementation";
       continue;
-    } else if (line.toLowerCase().includes('benefits') || line.toLowerCase().includes('advantages')) {
-      currentSection = 'benefits';
+    } else if (
+      line.toLowerCase().includes("benefits") ||
+      line.toLowerCase().includes("advantages")
+    ) {
+      currentSection = "benefits";
       continue;
-    } else if (line.toLowerCase().includes('challenges') || line.toLowerCase().includes('difficulties')) {
-      currentSection = 'challenges';
+    } else if (
+      line.toLowerCase().includes("challenges") ||
+      line.toLowerCase().includes("difficulties")
+    ) {
+      currentSection = "challenges";
       continue;
-    } else if (line.toLowerCase().includes('effort') || line.toLowerCase().includes('difficulty')) {
-      currentSection = 'effort';
+    } else if (
+      line.toLowerCase().includes("effort") ||
+      line.toLowerCase().includes("difficulty")
+    ) {
+      currentSection = "effort";
       continue;
-    } else if (line.toLowerCase().includes('impact') || line.toLowerCase().includes('effect')) {
-      currentSection = 'impact';
+    } else if (
+      line.toLowerCase().includes("impact") ||
+      line.toLowerCase().includes("effect")
+    ) {
+      currentSection = "impact";
       continue;
     }
-    
+
     // Add content to current section
-    if (currentSection === 'description') {
-      currentIdea.description = (currentIdea.description || '') + ' ' + line;
-    } else if (currentSection === 'implementation') {
+    if (currentSection === "description") {
+      currentIdea.description = `${currentIdea.description || ""} ${line}`;
+    } else if (currentSection === "implementation") {
       if (!currentIdea.implementation) currentIdea.implementation = [];
-      currentIdea.implementation.push(line.replace(/^[-•*]\s*/, ''));
-    } else if (currentSection === 'benefits') {
+      currentIdea.implementation.push(line.replace(/^[-•*]\s*/, ""));
+    } else if (currentSection === "benefits") {
       if (!currentIdea.benefits) currentIdea.benefits = [];
-      currentIdea.benefits.push(line.replace(/^[-•*]\s*/, ''));
-    } else if (currentSection === 'challenges') {
+      currentIdea.benefits.push(line.replace(/^[-•*]\s*/, ""));
+    } else if (currentSection === "challenges") {
       if (!currentIdea.challenges) currentIdea.challenges = [];
-      currentIdea.challenges.push(line.replace(/^[-•*]\s*/, ''));
-    } else if (currentSection === 'effort') {
+      currentIdea.challenges.push(line.replace(/^[-•*]\s*/, ""));
+    } else if (currentSection === "effort") {
       const effortLevel = line.toLowerCase();
-      if (effortLevel.includes('low')) currentIdea.effortLevel = 'low';
-      else if (effortLevel.includes('high')) currentIdea.effortLevel = 'high';
-      else currentIdea.effortLevel = 'medium';
-    } else if (currentSection === 'impact') {
+      if (effortLevel.includes("low")) currentIdea.effortLevel = "low";
+      else if (effortLevel.includes("high")) currentIdea.effortLevel = "high";
+      else currentIdea.effortLevel = "medium";
+    } else if (currentSection === "impact") {
       const impactLevel = line.toLowerCase();
-      if (impactLevel.includes('low')) currentIdea.impactLevel = 'low';
-      else if (impactLevel.includes('high')) currentIdea.impactLevel = 'high';
-      else currentIdea.impactLevel = 'medium';
+      if (impactLevel.includes("low")) currentIdea.impactLevel = "low";
+      else if (impactLevel.includes("high")) currentIdea.impactLevel = "high";
+      else currentIdea.impactLevel = "medium";
     }
   }
-  
+
   // Add last idea
   if (currentIdea.title) {
     ideas.push(currentIdea as Idea);
   }
-  
+
   // Clean up and validate ideas
-  return ideas.map(idea => ({
+  return ideas.map((idea) => ({
     ...idea,
-    title: idea.title?.trim() || 'Untitled Idea',
-    description: idea.description?.trim() || 'No description provided',
+    title: idea.title?.trim() || "Untitled Idea",
+    description: idea.description?.trim() || "No description provided",
     implementation: idea.implementation || [],
     benefits: idea.benefits || [],
     challenges: idea.challenges || [],
-    effortLevel: idea.effortLevel || 'medium',
-    impactLevel: idea.impactLevel || 'medium',
+    effortLevel: idea.effortLevel || "medium",
+    impactLevel: idea.impactLevel || "medium",
   }));
 }
 
@@ -330,28 +352,28 @@ function parseIdeasFromResponse(response: string): Idea[] {
  */
 function calculateCreativityScore(ideas: Idea[]): number {
   if (ideas.length === 0) return 0;
-  
+
   let score = 0;
-  let totalIdeas = ideas.length;
-  
+  const totalIdeas = ideas.length;
+
   for (const idea of ideas) {
     let ideaScore = 0.2; // Base score
-    
+
     // Title creativity
     if (idea.title && idea.title.length > 10) {
       ideaScore += 0.1;
     }
-    
+
     // Description quality
     if (idea.description && idea.description.length > 50) {
       ideaScore += 0.2;
     }
-    
+
     // Implementation details
     if (idea.implementation && idea.implementation.length > 0) {
       ideaScore += 0.2;
     }
-    
+
     // Benefits and challenges
     if (idea.benefits && idea.benefits.length > 0) {
       ideaScore += 0.1;
@@ -359,15 +381,15 @@ function calculateCreativityScore(ideas: Idea[]): number {
     if (idea.challenges && idea.challenges.length > 0) {
       ideaScore += 0.1;
     }
-    
+
     // Effort and impact levels
     if (idea.effortLevel && idea.impactLevel) {
       ideaScore += 0.1;
     }
-    
+
     score += ideaScore;
   }
-  
+
   return Math.min(1.0, score / totalIdeas);
 }
 
@@ -376,12 +398,12 @@ function calculateCreativityScore(ideas: Idea[]): number {
  */
 export async function handleScenarioIdeation(
   scenario: string,
-  options: IdeateOptions = {}
+  options: IdeateOptions = {},
 ): Promise<IdeateResult> {
   const scenarioPrompt = `Scenario: ${scenario}
 
 Based on this scenario, generate creative ideas for how to approach, solve, or improve the situation.`;
-  
+
   return handleIdeate(scenarioPrompt, options);
 }
 
@@ -391,13 +413,13 @@ Based on this scenario, generate creative ideas for how to approach, solve, or i
 export async function handleProblemIdeation(
   problem: string,
   context?: string,
-  options: IdeateOptions = {}
+  options: IdeateOptions = {},
 ): Promise<IdeateResult> {
   const problemPrompt = `Problem: ${problem}
-${context ? `Context: ${context}` : ''}
+${context ? `Context: ${context}` : ""}
 
 Generate innovative solutions and approaches to address this problem.`;
-  
+
   return handleIdeate(problemPrompt, options);
 }
 
@@ -407,13 +429,13 @@ Generate innovative solutions and approaches to address this problem.`;
 export async function handleOpportunityIdeation(
   opportunity: string,
   context?: string,
-  options: IdeateOptions = {}
+  options: IdeateOptions = {},
 ): Promise<IdeateResult> {
   const opportunityPrompt = `Opportunity: ${opportunity}
-${context ? `Context: ${context}` : ''}
+${context ? `Context: ${context}` : ""}
 
 Generate creative ways to capitalize on and maximize this opportunity.`;
-  
+
   return handleIdeate(opportunityPrompt, options);
 }
 
@@ -422,42 +444,44 @@ Generate creative ways to capitalize on and maximize this opportunity.`;
  */
 export async function handleBatchIdeation(
   inputs: string[],
-  options: IdeateOptions = {}
+  options: IdeateOptions = {},
 ): Promise<IdeateResult[]> {
-  logger.info('Starting batch ideation', { 
+  logger.info("Starting batch ideation", {
     inputCount: inputs.length,
-    options: Object.keys(options)
+    options: Object.keys(options),
   });
 
   const results: IdeateResult[] = [];
-  
+
   // Process inputs sequentially to avoid rate limiting
   for (let i = 0; i < inputs.length; i++) {
     try {
       const result = await handleIdeate(inputs[i], options);
       results.push(result);
-      
+
       // Add small delay between requests
       if (i < inputs.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     } catch (error) {
-      logger.error('Batch ideation failed for input', error as Error, { 
+      logger.error("Batch ideation failed for input", error as Error, {
         index: i,
-        inputLength: inputs[i].length 
+        inputLength: inputs[i].length,
       });
-      
+
       // Add error result
       results.push({
-        ideas: [{
-          title: `Error: Failed to generate ideas for input ${i + 1}`,
-          description: 'An error occurred during ideation.',
-          implementation: [],
-          benefits: [],
-          challenges: [],
-          effortLevel: 'medium',
-          impactLevel: 'low',
-        }],
+        ideas: [
+          {
+            title: `Error: Failed to generate ideas for input ${i + 1}`,
+            description: "An error occurred during ideation.",
+            implementation: [],
+            benefits: [],
+            challenges: [],
+            effortLevel: "medium",
+            impactLevel: "low",
+          },
+        ],
         context: {
           originalText: inputs[i],
         },
@@ -469,9 +493,11 @@ export async function handleBatchIdeation(
     }
   }
 
-  logger.info('Batch ideation completed', { 
-    successful: results.filter(r => !r.ideas[0]?.title.startsWith('Error:')).length,
-    failed: results.filter(r => r.ideas[0]?.title.startsWith('Error:')).length
+  logger.info("Batch ideation completed", {
+    successful: results.filter((r) => !r.ideas[0]?.title.startsWith("Error:"))
+      .length,
+    failed: results.filter((r) => r.ideas[0]?.title.startsWith("Error:"))
+      .length,
   });
 
   return results;

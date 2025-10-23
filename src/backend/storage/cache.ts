@@ -3,9 +3,9 @@
  * Manages AI response caching and recent requests storage
  */
 
-import { logger } from '../utils/logger';
-import { getConfig } from '../core/config';
-import { AIResponse } from '../utils/chromeWrapper';
+import { logger } from "../utils/logger";
+import { getConfig } from "../core/config";
+import { AIResponse } from "../utils/chromeWrapper";
 
 export interface CacheEntry {
   /** Unique identifier for the cache entry */
@@ -50,64 +50,78 @@ class CacheManager {
   };
 
   /**
-   * Generate a hash for the input text
+   * Generate a SHA256 hash for the input text and options
    */
-  private generateHash(text: string, action: string): string {
-    // Simple hash function for cache keys
-    const combined = `${action}:${text}`;
-    let hash = 0;
-    for (let i = 0; i < combined.length; i++) {
-      const char = combined.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return hash.toString(36);
+  private async generateHash(
+    text: string,
+    action: string,
+    options: any = {},
+  ): Promise<string> {
+    const combined = `${action}:${text}:${JSON.stringify(options)}`;
+
+    // Use Web Crypto API for SHA256
+    const encoder = new TextEncoder();
+    const data = encoder.encode(combined);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 
   /**
    * Check if a cache entry exists and is valid
    */
-  async getCacheEntry(inputText: string, action: string): Promise<AIResponse | null> {
+  async getCacheEntry(
+    inputText: string,
+    action: string,
+    options: any = {},
+  ): Promise<AIResponse | null> {
     try {
       const config = await getConfig();
-      
+
       if (!config.features.enableCaching) {
         this.stats.misses++;
         this.updateHitRate();
         return null;
       }
 
-      const inputHash = this.generateHash(inputText, action);
+      const inputHash = await this.generateHash(inputText, action, options);
       const cacheKey = `cache_${inputHash}`;
-      
+
       const result = await chrome.storage.local.get([cacheKey]);
       const entry: CacheEntry = result[cacheKey];
-      
+
       if (!entry) {
         this.stats.misses++;
         this.updateHitRate();
-        logger.debug('Cache miss', { action, inputHash });
+        logger.debug("Cache miss", { action, inputHash });
         return null;
       }
-      
+
       // Check if entry is expired
       const now = Date.now();
       if (now > entry.timestamp + entry.ttl) {
         await this.removeCacheEntry(cacheKey);
         this.stats.misses++;
         this.updateHitRate();
-        logger.debug('Cache entry expired', { action, inputHash, age: now - entry.timestamp });
+        logger.debug("Cache entry expired", {
+          action,
+          inputHash,
+          age: now - entry.timestamp,
+        });
         return null;
       }
-      
+
       this.stats.hits++;
       this.updateHitRate();
-      logger.debug('Cache hit', { action, inputHash, age: now - entry.timestamp });
-      
+      logger.debug("Cache hit", {
+        action,
+        inputHash,
+        age: now - entry.timestamp,
+      });
+
       return entry.response;
-      
     } catch (error) {
-      logger.error('Failed to get cache entry', error as Error, { action });
+      logger.error("Failed to get cache entry", error as Error, { action });
       this.stats.misses++;
       this.updateHitRate();
       return null;
@@ -120,18 +134,19 @@ class CacheManager {
   async saveToCache(
     action: string,
     inputText: string,
-    response: AIResponse
+    response: AIResponse,
+    options: any = {},
   ): Promise<void> {
     try {
       const config = await getConfig();
-      
+
       if (!config.features.enableCaching) {
         return;
       }
 
-      const inputHash = this.generateHash(inputText, action);
+      const inputHash = await this.generateHash(inputText, action, options);
       const cacheKey = `cache_${inputHash}`;
-      
+
       const entry: CacheEntry = {
         id: cacheKey,
         inputText,
@@ -141,23 +156,22 @@ class CacheManager {
         action,
         inputHash,
       };
-      
+
       await chrome.storage.local.set({ [cacheKey]: entry });
-      
+
       this.stats.totalEntries++;
       this.updateStats();
-      
-      logger.debug('Response cached', { 
-        action, 
-        inputHash, 
-        responseLength: response.text.length 
+
+      logger.debug("Response cached", {
+        action,
+        inputHash,
+        responseLength: response.text.length,
       });
-      
+
       // Clean up old entries if we exceed the limit
       await this.cleanupOldEntries();
-      
     } catch (error) {
-      logger.error('Failed to save to cache', error as Error, { action });
+      logger.error("Failed to save to cache", error as Error, { action });
     }
   }
 
@@ -169,10 +183,12 @@ class CacheManager {
       await chrome.storage.local.remove([cacheKey]);
       this.stats.totalEntries = Math.max(0, this.stats.totalEntries - 1);
       this.updateStats();
-      
-      logger.debug('Cache entry removed', { cacheKey });
+
+      logger.debug("Cache entry removed", { cacheKey });
     } catch (error) {
-      logger.error('Failed to remove cache entry', error as Error, { cacheKey });
+      logger.error("Failed to remove cache entry", error as Error, {
+        cacheKey,
+      });
     }
   }
 
@@ -182,21 +198,23 @@ class CacheManager {
   async clearCache(): Promise<void> {
     try {
       const result = await chrome.storage.local.get(null);
-      const cacheKeys = Object.keys(result).filter(key => key.startsWith('cache_'));
-      
+      const cacheKeys = Object.keys(result).filter((key) =>
+        key.startsWith("cache_"),
+      );
+
       if (cacheKeys.length > 0) {
         await chrome.storage.local.remove(cacheKeys);
       }
-      
+
       this.stats.totalEntries = 0;
       this.stats.hits = 0;
       this.stats.misses = 0;
       this.stats.hitRate = 0;
       this.updateStats();
-      
-      logger.info('Cache cleared', { entriesRemoved: cacheKeys.length });
+
+      logger.info("Cache cleared", { entriesRemoved: cacheKeys.length });
     } catch (error) {
-      logger.error('Failed to clear cache', error as Error);
+      logger.error("Failed to clear cache", error as Error);
     }
   }
 
@@ -214,16 +232,16 @@ class CacheManager {
     try {
       const result = await chrome.storage.local.get(null);
       const entries: CacheEntry[] = [];
-      
+
       for (const [key, value] of Object.entries(result)) {
-        if (key.startsWith('cache_') && value && typeof value === 'object') {
+        if (key.startsWith("cache_") && value && typeof value === "object") {
           entries.push(value as CacheEntry);
         }
       }
-      
+
       return entries.sort((a, b) => b.timestamp - a.timestamp);
     } catch (error) {
-      logger.error('Failed to get all cache entries', error as Error);
+      logger.error("Failed to get all cache entries", error as Error);
       return [];
     }
   }
@@ -242,16 +260,16 @@ class CacheManager {
   private async updateStats(): Promise<void> {
     try {
       const entries = await this.getAllCacheEntries();
-      
+
       if (entries.length > 0) {
-        this.stats.oldestEntry = Math.min(...entries.map(e => e.timestamp));
-        this.stats.newestEntry = Math.max(...entries.map(e => e.timestamp));
+        this.stats.oldestEntry = Math.min(...entries.map((e) => e.timestamp));
+        this.stats.newestEntry = Math.max(...entries.map((e) => e.timestamp));
       } else {
         this.stats.oldestEntry = 0;
         this.stats.newestEntry = 0;
       }
     } catch (error) {
-      logger.error('Failed to update cache stats', error as Error);
+      logger.error("Failed to update cache stats", error as Error);
     }
   }
 
@@ -262,28 +280,30 @@ class CacheManager {
     try {
       const config = await getConfig();
       const entries = await this.getAllCacheEntries();
-      
+
       if (entries.length <= config.limits.maxCacheEntries) {
         return;
       }
-      
+
       // Sort by timestamp (oldest first) and remove excess entries
       entries.sort((a, b) => a.timestamp - b.timestamp);
-      const entriesToRemove = entries.slice(0, entries.length - config.limits.maxCacheEntries);
-      
-      const keysToRemove = entriesToRemove.map(entry => entry.id);
+      const entriesToRemove = entries.slice(
+        0,
+        entries.length - config.limits.maxCacheEntries,
+      );
+
+      const keysToRemove = entriesToRemove.map((entry) => entry.id);
       await chrome.storage.local.remove(keysToRemove);
-      
+
       this.stats.totalEntries = entries.length - entriesToRemove.length;
       this.updateStats();
-      
-      logger.info('Cache cleanup completed', { 
+
+      logger.info("Cache cleanup completed", {
         removed: entriesToRemove.length,
-        remaining: this.stats.totalEntries 
+        remaining: this.stats.totalEntries,
       });
-      
     } catch (error) {
-      logger.error('Failed to cleanup old cache entries', error as Error);
+      logger.error("Failed to cleanup old cache entries", error as Error);
     }
   }
 }
@@ -298,9 +318,10 @@ export const cacheManager = new CacheManager();
  */
 export async function getCachedResponse(
   inputText: string,
-  action: string
+  action: string,
+  options: any = {},
 ): Promise<AIResponse | null> {
-  return cacheManager.getCacheEntry(inputText, action);
+  return cacheManager.getCacheEntry(inputText, action, options);
 }
 
 /**
@@ -309,9 +330,10 @@ export async function getCachedResponse(
 export async function saveToCache(
   action: string,
   inputText: string,
-  response: AIResponse
+  response: AIResponse,
+  options: any = {},
 ): Promise<void> {
-  return cacheManager.saveToCache(action, inputText, response);
+  return cacheManager.saveToCache(action, inputText, response, options);
 }
 
 /**
