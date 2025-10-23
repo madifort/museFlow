@@ -28,6 +28,11 @@ export function buildPrompt(
   text: string,
   options: PromptOptions = {},
 ): string {
+  // Context validation step: if text < 10 chars → return "INSUFFICIENT_CONTEXT"
+  if (!text || text.trim().length < 10) {
+    throw new Error("INSUFFICIENT_CONTEXT: Text must be at least 10 characters long");
+  }
+
   // Validate input text length
   if (text.length > 5000) {
     console.warn("Text length exceeds recommended limit, truncating...");

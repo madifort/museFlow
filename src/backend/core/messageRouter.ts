@@ -80,7 +80,7 @@ export async function initializeMessageRouter(): Promise<void> {
 /**
  * Handle incoming messages
  */
-async function handleMessage(
+export async function handleMessage(
   request: MessageRequest,
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: MessageResponse) => void,
@@ -89,7 +89,7 @@ async function handleMessage(
   const requestId = request.requestId || generateRequestId();
 
   try {
-    logger.debug("Message received", {
+    console.log('[MuseFlow] Message received:', {
       action: request.action,
       requestId,
       source: request.source,
@@ -170,22 +170,15 @@ async function handleMessage(
       metadata,
     };
 
-    logger.info("Message processed successfully", {
-      action: request.action,
-      requestId,
-      processingTime: metadata.processingTime,
-    });
+    console.log('[MuseFlow] Router executed action:', request.action);
+    console.log('[MuseFlow] Response sent:', response);
 
     sendResponse(response);
     return true;
   } catch (error) {
     const processingTime = Date.now() - startTime;
 
-    logger.error("Message processing failed", error as Error, {
-      action: request.action,
-      requestId,
-      processingTime,
-    });
+    console.error('[MuseFlow] Message processing failed:', error);
 
     const response: MessageResponse = {
       success: false,
@@ -198,6 +191,18 @@ async function handleMessage(
       },
     };
 
+    // Handle specific error types with structured responses
+    if (error instanceof Error) {
+      if (error.message.includes("INSUFFICIENT_CONTEXT")) {
+        response.error = "INSUFFICIENT_CONTEXT: Please provide at least 10 characters of text";
+      } else if (error.message.includes("Chrome AI API not available")) {
+        response.error = "AI service unavailable: Chrome AI API not accessible";
+      } else if (error.message.includes("No AI provider available")) {
+        response.error = "AI service unavailable: No AI providers configured";
+      }
+    }
+
+    console.log('[MuseFlow] Error response sent:', response);
     sendResponse(response);
     return true;
   }

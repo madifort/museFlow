@@ -7,7 +7,8 @@
     "build": "vite build",
     "test": "vitest run",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
-    "package": "vite build && Compress-Archive -Path dist -DestinationPath dist.zip -Force"
+    "package": "vite build && Compress-Archive -Path dist -DestinationPath dist.zip -Force",
+    "debug:messages": "node scripts/test-message.js"
   },
   "dependencies": {
     "react": "^18.2.0",

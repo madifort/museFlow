@@ -39,6 +39,14 @@ chrome.runtime.onMessage.addListener(
 
 async function handleTriggerAction(message: TriggerActionMessage) {
   try {
+    console.log('[MuseFlow] Content script handling action:', message.action);
+    
+    // Add timeout protection
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 10000); // 10 second timeout
+    
     // Send request to background script
     const response = await chrome.runtime.sendMessage({
       action: message.action,
@@ -48,14 +56,22 @@ async function handleTriggerAction(message: TriggerActionMessage) {
       source: "content",
     });
 
-    if (response.success) {
+    clearTimeout(timeout);
+    console.log('[MuseFlow] Content script received response:', response);
+
+    if (response && response.success) {
       showAIOverlay(response.data, message.action);
     } else {
-      showErrorOverlay(response.error || "Unknown error occurred");
+      showErrorOverlay(response?.error || "Unknown error occurred");
     }
   } catch (error) {
-    console.error("MuseFlow: Error processing action:", error);
-    showErrorOverlay("Failed to process request");
+    console.error('[MuseFlow] Content script error processing action:', error);
+    if (error.name === 'AbortError') {
+      showErrorOverlay("Request timed out. Please try again.");
+    } else {
+      showErrorOverlay("Failed to process request");
+    }
+    throw error; // Re-throw to trigger button reset
   }
 }
 
@@ -86,7 +102,12 @@ function showActionButtons(selectedText: string, event: MouseEvent) {
     display: flex;
     gap: 4px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: opacity 0.2s ease;
+    border: 2px solid #374151;
   `;
+
+  // Processing state flag - must be declared before button creation
+  let isProcessing = false;
 
   const actions = [
     { id: "summarize", label: "Summarize", icon: "📝" },
@@ -110,21 +131,55 @@ function showActionButtons(selectedText: string, event: MouseEvent) {
     `;
 
     button.addEventListener("mouseenter", () => {
-      button.style.background = "#4b5563";
+      if (!isProcessing) {
+        button.style.background = "#4b5563";
+      }
     });
 
     button.addEventListener("mouseleave", () => {
-      button.style.background = "#374151";
+      if (!isProcessing) {
+        button.style.background = "#374151";
+      }
     });
 
-    button.addEventListener("click", async () => {
-      buttonContainer.remove();
-      await handleTriggerAction({
-        type: "TRIGGER_ACTION",
-        action: action.id as any,
-        text: selectedText,
-        source: "content",
-      });
+    button.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log('[MuseFlow] Button clicked:', action.id);
+      
+      // Set processing flag to prevent removal
+      isProcessing = true;
+      
+      // Show loading state instead of immediately removing
+      buttonContainer.style.opacity = "0.7";
+      buttonContainer.style.pointerEvents = "none";
+      
+      // Update button to show loading
+      button.textContent = "⏳ Processing...";
+      button.style.background = "#6b7280";
+      
+      try {
+        console.log('[MuseFlow] Calling handleTriggerAction for:', action.id);
+        await handleTriggerAction({
+          type: "TRIGGER_ACTION",
+          action: action.id as any,
+          text: selectedText,
+          source: "content",
+        });
+        
+        console.log('[MuseFlow] Action completed successfully, removing container');
+        // Only remove after successful completion
+        buttonContainer.remove();
+      } catch (error) {
+        console.error('[MuseFlow] Button action failed:', error);
+        // Reset button state on error
+        button.textContent = `${action.icon} ${action.label}`;
+        button.style.background = "#374151";
+        buttonContainer.style.opacity = "1";
+        buttonContainer.style.pointerEvents = "auto";
+        isProcessing = false; // Reset processing flag
+      }
     });
 
     buttonContainer.appendChild(button);
@@ -132,9 +187,16 @@ function showActionButtons(selectedText: string, event: MouseEvent) {
 
   document.body.appendChild(buttonContainer);
 
-  // Remove buttons when clicking elsewhere
+  // Remove buttons when clicking elsewhere (but not immediately)
   const removeButtons = (e: Event) => {
+    // Don't remove if we're processing an action
+    if (isProcessing) {
+      console.log('[MuseFlow] Ignoring click outside - processing in progress');
+      return;
+    }
+    
     if (!buttonContainer.contains(e.target as Node)) {
+      console.log('[MuseFlow] Removing buttons - clicked outside');
       buttonContainer.remove();
       document.removeEventListener("click", removeButtons);
     }

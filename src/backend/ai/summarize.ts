@@ -4,7 +4,7 @@
  */
 
 import { buildPrompt, PromptOptions } from "../core/promptBuilder";
-import { callChromeAI, AIRequest } from "../utils/chromeWrapper";
+import { callChromeAI, callChromeAISummarize, AIRequest } from "../utils/chromeWrapper";
 import { getCachedResponse, saveToCache } from "../storage/cache";
 import { getDefaultPromptOptions } from "../storage/settings";
 import { logger } from "../utils/logger";
@@ -92,8 +92,19 @@ export async function handleSummarize(
       temperature: 0.3, // Lower temperature for more consistent summaries
     };
 
-    // Call AI service
-    const aiResponse = await callChromeAI(aiRequest);
+    // Call Chrome AI service directly for summarization
+    let aiResponse;
+    try {
+      console.log('[MuseFlow] Attempting Chrome AI summarization...');
+      aiResponse = await callChromeAISummarize(text, {
+        length: finalOptions.summaryLength || "medium"
+      });
+      console.log('[MuseFlow] Chrome AI summarization successful');
+    } catch (chromeError) {
+      console.log('[MuseFlow] Chrome AI summarization failed, falling back to general AI...');
+      // Fallback to general AI call
+      aiResponse = await callChromeAI(aiRequest);
+    }
 
     // Parse and validate response
     const result = parseSummarizeResponse(aiResponse.text, finalOptions);

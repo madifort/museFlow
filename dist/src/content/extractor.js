@@ -1,4 +1,4 @@
-document.addEventListener("mouseup",async e=>{var o;const t=(o=window.getSelection())==null?void 0:o.toString().trim();t&&t.length>10&&u(t,e)});chrome.runtime.onMessage.addListener((e,t,o)=>(e.type==="TRIGGER_ACTION"?l(e):e.type==="AI_RESPONSE"&&p(e),!0));async function l(e){try{const t=await chrome.runtime.sendMessage({action:e.action,text:e.text,options:{},requestId:`req_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,source:"content"});t.success?d(t.data,e.action):a(t.error||"Unknown error occurred")}catch(t){console.error("MuseFlow: Error processing action:",t),a("Failed to process request")}}function p(e){e.success?d(e.data,e.action):a(e.error||"Unknown error occurred")}function u(e,t){document.querySelectorAll(".museflow-buttons").forEach(r=>r.remove());const n=document.createElement("div");n.className="museflow-buttons",n.style.cssText=`
+document.addEventListener("mouseup",async e=>{var n;const t=(n=window.getSelection())==null?void 0:n.toString().trim();t&&t.length>10&&x(t,e)});chrome.runtime.onMessage.addListener((e,t,n)=>(e.type==="TRIGGER_ACTION"?u(e):e.type==="AI_RESPONSE"&&y(e),!0));async function u(e){try{console.log("[MuseFlow] Content script handling action:",e.action);const t=new AbortController,n=setTimeout(()=>{t.abort()},1e4),o=await chrome.runtime.sendMessage({action:e.action,text:e.text,options:{},requestId:`req_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,source:"content"});clearTimeout(n),console.log("[MuseFlow] Content script received response:",o),o&&o.success?p(o.data,e.action):c((o==null?void 0:o.error)||"Unknown error occurred")}catch(t){throw console.error("[MuseFlow] Content script error processing action:",t),t.name==="AbortError"?c("Request timed out. Please try again."):c("Failed to process request"),t}}function y(e){e.success?p(e.data,e.action):c(e.error||"Unknown error occurred")}function x(e,t){document.querySelectorAll(".museflow-buttons").forEach(s=>s.remove());const o=document.createElement("div");o.className="museflow-buttons",o.style.cssText=`
     position: fixed;
     top: ${t.clientY-10}px;
     left: ${t.clientX}px;
@@ -10,7 +10,9 @@ document.addEventListener("mouseup",async e=>{var o;const t=(o=window.getSelecti
     display: flex;
     gap: 4px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  `,[{id:"summarize",label:"Summarize",icon:"📝"},{id:"rewrite",label:"Rewrite",icon:"✏️"},{id:"ideate",label:"Ideate",icon:"💡"},{id:"translate",label:"Translate",icon:"🌐"}].forEach(r=>{const i=document.createElement("button");i.textContent=`${r.icon} ${r.label}`,i.style.cssText=`
+    transition: opacity 0.2s ease;
+    border: 2px solid #374151;
+  `;let i=!1;[{id:"summarize",label:"Summarize",icon:"📝"},{id:"rewrite",label:"Rewrite",icon:"✏️"},{id:"ideate",label:"Ideate",icon:"💡"},{id:"translate",label:"Translate",icon:"🌐"}].forEach(s=>{const r=document.createElement("button");r.textContent=`${s.icon} ${s.label}`,r.style.cssText=`
       background: #374151;
       color: white;
       border: none;
@@ -19,7 +21,7 @@ document.addEventListener("mouseup",async e=>{var o;const t=(o=window.getSelecti
       cursor: pointer;
       font-size: 12px;
       transition: background-color 0.2s;
-    `,i.addEventListener("mouseenter",()=>{i.style.background="#4b5563"}),i.addEventListener("mouseleave",()=>{i.style.background="#374151"}),i.addEventListener("click",async()=>{n.remove(),await l({type:"TRIGGER_ACTION",action:r.id,text:e,source:"content"})}),n.appendChild(i)}),document.body.appendChild(n);const s=r=>{n.contains(r.target)||(n.remove(),document.removeEventListener("click",s))};setTimeout(()=>{document.addEventListener("click",s)},100)}function d(e,t){var c;const o=document.createElement("div");o.className="museflow-overlay",o.style.cssText=`
+    `,r.addEventListener("mouseenter",()=>{i||(r.style.background="#4b5563")}),r.addEventListener("mouseleave",()=>{i||(r.style.background="#374151")}),r.addEventListener("click",async d=>{d.preventDefault(),d.stopPropagation(),console.log("[MuseFlow] Button clicked:",s.id),i=!0,o.style.opacity="0.7",o.style.pointerEvents="none",r.textContent="⏳ Processing...",r.style.background="#6b7280";try{console.log("[MuseFlow] Calling handleTriggerAction for:",s.id),await u({type:"TRIGGER_ACTION",action:s.id,text:e,source:"content"}),console.log("[MuseFlow] Action completed successfully, removing container"),o.remove()}catch(m){console.error("[MuseFlow] Button action failed:",m),r.textContent=`${s.icon} ${s.label}`,r.style.background="#374151",o.style.opacity="1",o.style.pointerEvents="auto",i=!1}}),o.appendChild(r)}),document.body.appendChild(o);const l=s=>{if(i){console.log("[MuseFlow] Ignoring click outside - processing in progress");return}o.contains(s.target)||(console.log("[MuseFlow] Removing buttons - clicked outside"),o.remove(),document.removeEventListener("click",l))};setTimeout(()=>{document.addEventListener("click",l)},100)}function p(e,t){var i;const n=document.createElement("div");n.className="museflow-overlay",n.style.cssText=`
     position: fixed;
     top: 20px;
     right: 20px;
@@ -35,16 +37,16 @@ document.addEventListener("mouseup",async e=>{var o;const t=(o=window.getSelecti
     font-size: 14px;
     line-height: 1.5;
     overflow-y: auto;
-  `;let n="";typeof e=="string"?n=e:e.summary?n=e.summary:e.rewrittenText?n=e.rewrittenText:e.ideas&&Array.isArray(e.ideas)?n=e.ideas.map((s,r)=>`${r+1}. ${s.title||"Idea"}
-${s.description||""}`).join(`
+  `;let o="";typeof e=="string"?o=e:e.summary?o=e.summary:e.rewrittenText?o=e.rewrittenText:e.ideas&&Array.isArray(e.ideas)?o=e.ideas.map((a,l)=>`${l+1}. ${a.title||"Idea"}
+${a.description||""}`).join(`
 
-`):e.translatedText?n=e.translatedText:n=JSON.stringify(e,null,2),o.innerHTML=`
+`):e.translatedText?o=e.translatedText:o=JSON.stringify(e,null,2),n.innerHTML=`
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
       <strong style="color: #60a5fa;">MuseFlow ${t.charAt(0).toUpperCase()+t.slice(1)}</strong>
       <button id="close-overlay" style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 18px;">&times;</button>
     </div>
-    <div style="max-height: 400px; overflow-y: auto;">${n}</div>
-  `,document.body.appendChild(o),(c=o.querySelector("#close-overlay"))==null||c.addEventListener("click",()=>{o.remove()}),setTimeout(()=>{o.parentNode&&o.remove()},15e3)}function a(e){var o;const t=document.createElement("div");t.style.cssText=`
+    <div style="max-height: 400px; overflow-y: auto;">${o}</div>
+  `,document.body.appendChild(n),(i=n.querySelector("#close-overlay"))==null||i.addEventListener("click",()=>{n.remove()}),setTimeout(()=>{n.parentNode&&n.remove()},15e3)}function c(e){var n;const t=document.createElement("div");t.style.cssText=`
     position: fixed;
     top: 20px;
     right: 20px;
@@ -64,4 +66,4 @@ ${s.description||""}`).join(`
       <button id="close-overlay" style="background: none; border: none; color: #fca5a5; cursor: pointer; font-size: 18px;">&times;</button>
     </div>
     <div>${e}</div>
-  `,document.body.appendChild(t),(o=t.querySelector("#close-overlay"))==null||o.addEventListener("click",()=>{t.remove()}),setTimeout(()=>{t.parentNode&&t.remove()},5e3)}
+  `,document.body.appendChild(t),(n=t.querySelector("#close-overlay"))==null||n.addEventListener("click",()=>{t.remove()}),setTimeout(()=>{t.parentNode&&t.remove()},5e3)}

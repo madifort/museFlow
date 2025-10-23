@@ -1,19 +1,24 @@
 // Background service worker for Chrome extension
-import { initializeBackend } from "../backend/core/messageRouter";
+import { handleMessage } from "../backend/core/messageRouter";
 import { logger } from "../backend/utils/logger";
 
 // Initialize the backend system
-initializeBackend().catch((error) => {
-  console.error("Failed to initialize MuseFlow backend:", error);
-});
+async function initializeBackend() {
+  try {
+    await logger.initializeLogging();
+    console.log('[MuseFlow] Backend initialized successfully');
+  } catch (error) {
+    console.error("Failed to initialize MuseFlow backend:", error);
+  }
+}
+
+// Initialize on startup
+initializeBackend();
 
 // Handle extension installation
 chrome.runtime.onInstalled.addListener((details) => {
-  logger.info("Extension installed/updated", {
-    reason: details.reason,
-    previousVersion: details.previousVersion,
-  });
-
+  console.log('[MuseFlow] Extension installed/updated:', details.reason);
+  
   // Create context menu for text selection
   chrome.contextMenus.create({
     id: "museflow-summarize",
@@ -63,14 +68,23 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         source: "contextMenu",
       })
       .catch((error) => {
-        logger.error(
-          "Failed to send message to content script",
-          error as Error,
-          {
-            tabId: tab.id,
-            action,
-          },
-        );
+        console.error('[MuseFlow] Failed to send message to content script:', error);
       });
   }
+});
+
+// Handle runtime messages - CRITICAL FIX
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('[MuseFlow] Message received:', message);
+  
+  // Always return true to keep the message channel open for async responses
+  handleMessage(message, sender, sendResponse).catch((error) => {
+    console.error('[MuseFlow] Error handling message:', error);
+    sendResponse({ 
+      success: false, 
+      error: error.message || 'Unknown error occurred' 
+    });
+  });
+  
+  return true; // This is crucial for async message handling
 });

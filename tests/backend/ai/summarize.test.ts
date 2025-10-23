@@ -1,11 +1,53 @@
 /**
- * Tests for summarize AI handler
+ * Tests for MuseFlow Summarize AI Handler
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { handleSummarize, SummarizeOptions } from '../../../src/backend/ai/summarize';
 
-// Mock dependencies
+// Mock Chrome APIs
+const mockChrome = {
+  ai: {
+    summarizer: {
+      summarize: vi.fn(),
+    },
+    languageModel: {
+      create: vi.fn(),
+    },
+  },
+  storage: {
+    local: {
+      get: vi.fn(),
+      set: vi.fn(),
+    },
+    sync: {
+      get: vi.fn(),
+      set: vi.fn(),
+    },
+  },
+};
+
+// Mock global chrome object
+global.chrome = mockChrome as any;
+
+// Mock the chromeWrapper module
+vi.mock('../../../src/backend/utils/chromeWrapper', () => ({
+  callChromeAISummarize: vi.fn(),
+  callChromeAI: vi.fn(),
+}));
+
+// Mock the cache module
+vi.mock('../../../src/backend/storage/cache', () => ({
+  getCachedResponse: vi.fn(),
+  saveToCache: vi.fn(),
+}));
+
+// Mock the settings module
+vi.mock('../../../src/backend/storage/settings', () => ({
+  getDefaultPromptOptions: vi.fn(() => ({})),
+}));
+
+// Mock the logger module
 vi.mock('../../../src/backend/utils/logger', () => ({
   logger: {
     info: vi.fn(),
@@ -15,100 +57,143 @@ vi.mock('../../../src/backend/utils/logger', () => ({
   },
 }));
 
-vi.mock('../../../src/backend/utils/chromeWrapper', () => ({
-  callChromeAI: vi.fn(),
-}));
-
-vi.mock('../../../src/backend/storage/cache', () => ({
-  getCachedResponse: vi.fn(),
-  saveToCache: vi.fn(),
-}));
-
-vi.mock('../../../src/backend/storage/settings', () => ({
-  getDefaultPromptOptions: vi.fn(() => ({})),
-}));
-
 describe('Summarize AI Handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should handle basic summarization', async () => {
-    const { callChromeAI } = await import('../../../src/backend/utils/chromeWrapper');
-    const { getCachedResponse } = await import('../../../src/backend/storage/cache');
-    
-    vi.mocked(getCachedResponse).mockResolvedValue(null);
-    vi.mocked(callChromeAI).mockResolvedValue({
-      text: 'This is a test summary.',
-      model: 'test-model',
-      provider: 'chrome',
-      timestamp: new Date().toISOString(),
-    });
-
-    const result = await handleSummarize('This is a test text to summarize.');
-
-    expect(result.summary).toBe('This is a test summary.');
-    expect(result.metadata.originalLength).toBe(35);
-    expect(result.metadata.summaryLength).toBe(25);
-    expect(result.metadata.compressionRatio).toBeCloseTo(0.714, 2);
+  afterEach(() => {
+    vi.resetAllMocks();
   });
 
-  it('should use cached response when available', async () => {
-    const { getCachedResponse } = await import('../../../src/backend/storage/cache');
-    
-    vi.mocked(getCachedResponse).mockResolvedValue({
-      text: 'Cached summary',
-      model: 'test-model',
-      provider: 'chrome',
-      timestamp: new Date().toISOString(),
+  describe('handleSummarize', () => {
+    it('should throw error for insufficient context', async () => {
+      const shortText = 'Hi';
+      
+      await expect(handleSummarize(shortText)).rejects.toThrow('INSUFFICIENT_CONTEXT');
     });
 
-    const result = await handleSummarize('Test text');
-
-    expect(result.summary).toBe('Cached summary');
-    expect(getCachedResponse).toHaveBeenCalledWith('Test text', 'summarize', {});
-  });
-
-  it('should handle different summary lengths', async () => {
-    const { callChromeAI } = await import('../../../src/backend/utils/chromeWrapper');
-    const { getCachedResponse } = await import('../../../src/backend/storage/cache');
-    
-    vi.mocked(getCachedResponse).mockResolvedValue(null);
-    vi.mocked(callChromeAI).mockResolvedValue({
-      text: 'Short summary.',
-      model: 'test-model',
-      provider: 'chrome',
-      timestamp: new Date().toISOString(),
+    it('should throw error for empty text', async () => {
+      await expect(handleSummarize('')).rejects.toThrow('INSUFFICIENT_CONTEXT');
     });
 
-    const options: SummarizeOptions = {
-      summaryLength: 'short',
-    };
+    it('should use cached response when available', async () => {
+      const { getCachedResponse } = await import('../../../src/backend/storage/cache');
+      const mockCachedResponse = {
+        text: 'Cached summary',
+        timestamp: new Date().toISOString(),
+      };
+      
+      vi.mocked(getCachedResponse).mockResolvedValue(mockCachedResponse);
 
-    const result = await handleSummarize('Test text', options);
+      const result = await handleSummarize('This is a test text for summarization.');
 
-    expect(result.summary).toBe('Short summary.');
-  });
-
-  it('should throw error for empty text', async () => {
-    await expect(handleSummarize('')).rejects.toThrow('Input text cannot be empty');
-  });
-
-  it('should truncate long text', async () => {
-    const { callChromeAI } = await import('../../../src/backend/utils/chromeWrapper');
-    const { getCachedResponse } = await import('../../../src/backend/storage/cache');
-    
-    vi.mocked(getCachedResponse).mockResolvedValue(null);
-    vi.mocked(callChromeAI).mockResolvedValue({
-      text: 'Summary of long text',
-      model: 'test-model',
-      provider: 'chrome',
-      timestamp: new Date().toISOString(),
+      expect(result.summary).toBe('Cached summary');
+      expect(getCachedResponse).toHaveBeenCalledWith(
+        'This is a test text for summarization.',
+        'summarize',
+        {}
+      );
     });
 
-    const longText = 'a'.repeat(6000);
-    const result = await handleSummarize(longText);
+    it('should call Chrome AI summarizer when available', async () => {
+      const { callChromeAISummarize } = await import('../../../src/backend/utils/chromeWrapper');
+      const mockResponse = {
+        text: 'Generated summary',
+        model: 'chrome-summarizer',
+        provider: 'chrome',
+        timestamp: new Date().toISOString(),
+      };
+      
+      vi.mocked(callChromeAISummarize).mockResolvedValue(mockResponse);
 
-    expect(result.metadata.originalLength).toBe(5003); // 5000 + '...'
+      const result = await handleSummarize('This is a test text for summarization.');
+
+      expect(result.summary).toBe('Generated summary');
+      expect(callChromeAISummarize).toHaveBeenCalledWith(
+        'This is a test text for summarization.',
+        { length: 'medium' }
+      );
+    });
+
+    it('should fallback to general AI when Chrome AI fails', async () => {
+      const { callChromeAISummarize, callChromeAI } = await import('../../../src/backend/utils/chromeWrapper');
+      const mockFallbackResponse = {
+        text: 'Fallback summary',
+        model: 'gpt-3.5-turbo',
+        provider: 'openai',
+        timestamp: new Date().toISOString(),
+      };
+      
+      vi.mocked(callChromeAISummarize).mockRejectedValue(new Error('Chrome AI not available'));
+      vi.mocked(callChromeAI).mockResolvedValue(mockFallbackResponse);
+
+      const result = await handleSummarize('This is a test text for summarization.');
+
+      expect(result.summary).toBe('Fallback summary');
+      expect(callChromeAI).toHaveBeenCalled();
+    });
+
+    it('should handle different summary lengths', async () => {
+      const { callChromeAISummarize } = await import('../../../src/backend/utils/chromeWrapper');
+      const mockResponse = {
+        text: 'Short summary',
+        model: 'chrome-summarizer',
+        provider: 'chrome',
+        timestamp: new Date().toISOString(),
+      };
+      
+      vi.mocked(callChromeAISummarize).mockResolvedValue(mockResponse);
+
+      const options: SummarizeOptions = { summaryLength: 'short' };
+      await handleSummarize('This is a test text for summarization.', options);
+
+      expect(callChromeAISummarize).toHaveBeenCalledWith(
+        'This is a test text for summarization.',
+        { length: 'short' }
+      );
+    });
+
+    it('should truncate text that exceeds length limit', async () => {
+      const { callChromeAISummarize } = await import('../../../src/backend/utils/chromeWrapper');
+      const mockResponse = {
+        text: 'Summary of long text',
+        model: 'chrome-summarizer',
+        provider: 'chrome',
+        timestamp: new Date().toISOString(),
+      };
+      
+      vi.mocked(callChromeAISummarize).mockResolvedValue(mockResponse);
+
+      const longText = 'A'.repeat(6000); // Exceeds 5000 char limit
+      await handleSummarize(longText);
+
+      expect(callChromeAISummarize).toHaveBeenCalledWith(
+        expect.stringMatching(/^A{5000}\.\.\.$/),
+        { length: 'medium' }
+      );
+    });
+
+    it('should return proper metadata', async () => {
+      const { callChromeAISummarize } = await import('../../../src/backend/utils/chromeWrapper');
+      const mockResponse = {
+        text: 'Generated summary',
+        model: 'chrome-summarizer',
+        provider: 'chrome',
+        timestamp: new Date().toISOString(),
+      };
+      
+      vi.mocked(callChromeAISummarize).mockResolvedValue(mockResponse);
+
+      const text = 'This is a test text for summarization.';
+      const result = await handleSummarize(text);
+
+      expect(result.metadata).toMatchObject({
+        originalLength: text.length,
+        summaryLength: 'Generated summary'.length,
+        compressionRatio: expect.any(Number),
+        processingTime: expect.any(Number),
+      });
+    });
   });
 });

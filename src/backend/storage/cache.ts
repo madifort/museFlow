@@ -121,6 +121,7 @@ class CacheManager {
 
       return entry.response;
     } catch (error) {
+      console.error('[MuseFlow] Cache error:', error);
       logger.error("Failed to get cache entry", error as Error, { action });
       this.stats.misses++;
       this.updateHitRate();
@@ -171,6 +172,7 @@ class CacheManager {
       // Clean up old entries if we exceed the limit
       await this.cleanupOldEntries();
     } catch (error) {
+      console.error('[MuseFlow] Cache save error:', error);
       logger.error("Failed to save to cache", error as Error, { action });
     }
   }

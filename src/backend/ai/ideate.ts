@@ -4,7 +4,7 @@
  */
 
 import { buildPrompt, PromptOptions } from "../core/promptBuilder";
-import { callChromeAI, AIRequest } from "../utils/chromeWrapper";
+import { callChromeAI, callChromeAIGenerate, AIRequest } from "../utils/chromeWrapper";
 import { getCachedResponse, saveToCache } from "../storage/cache";
 import { getDefaultPromptOptions } from "../storage/settings";
 import { logger } from "../utils/logger";
@@ -124,8 +124,22 @@ export async function handleIdeate(
       temperature: 0.8, // Higher temperature for creativity
     };
 
-    // Call AI service
-    const aiResponse = await callChromeAI(aiRequest);
+    // Call Chrome AI service directly for creative ideation
+    let aiResponse;
+    try {
+      console.log('[MuseFlow] Attempting Chrome AI text generation for ideation...');
+      aiResponse = await callChromeAIGenerate(prompt, {
+        temperature: 0.8, // Higher temperature for more creative ideas
+        maxTokens: Math.min(text.length * 3, 1500), // Allow for detailed ideas
+        topP: 0.9,
+        model: "gemini-pro"
+      });
+      console.log('[MuseFlow] Chrome AI ideation successful');
+    } catch (chromeError) {
+      console.log('[MuseFlow] Chrome AI ideation failed, falling back to general AI...');
+      // Fallback to general AI call
+      aiResponse = await callChromeAI(aiRequest);
+    }
 
     // Parse and validate response
     const ideas = parseIdeasFromResponse(aiResponse.text);

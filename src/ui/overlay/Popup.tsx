@@ -52,25 +52,52 @@ const Popup: React.FC = () => {
     setOutput("");
 
     try {
-      // Send message to background script
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+      // Send message to background script using proper format
       const response = await chrome.runtime.sendMessage({
-        type: "PROCESS_TEXT",
-        data: {
-          text: inputText,
-          operation: selectedOperation,
-        },
+        action: selectedOperation,
+        text: inputText,
+        options: {},
+        requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        source: "popup",
       });
 
-      if (response && response.response) {
-        setOutput(response.response);
-      } else {
-        setOutput(
-          "Processing completed, but no response received. This is expected in the MVP version.",
-        );
+      clearTimeout(timeout);
+
+      if (!response || !response.success) {
+        throw new Error(response?.error || 'No response from MuseFlow backend');
       }
+
+      // Extract the result from the response
+      let resultText = '';
+      if (typeof response.data === 'string') {
+        resultText = response.data;
+      } else if (response.data.summary) {
+        resultText = response.data.summary;
+      } else if (response.data.rewrittenText) {
+        resultText = response.data.rewrittenText;
+      } else if (response.data.ideas && Array.isArray(response.data.ideas)) {
+        resultText = response.data.ideas
+          .map((idea: any, index: number) => 
+            `${index + 1}. ${idea.title || "Idea"}\n${idea.description || ""}`
+          )
+          .join("\n\n");
+      } else if (response.data.translatedText) {
+        resultText = response.data.translatedText;
+      } else {
+        resultText = JSON.stringify(response.data, null, 2);
+      }
+
+      setOutput(resultText);
     } catch (error) {
-      console.error("Error processing text:", error);
-      setOutput("Error processing text. Please try again.");
+      console.error('[MuseFlow] Popup Error:', error);
+      if (error.name === 'AbortError') {
+        setOutput("Request timed out. Please try again.");
+      } else {
+        setOutput(`Error: ${error.message || 'MuseFlow backend not responding.'}`);
+      }
     } finally {
       setIsProcessing(false);
       // Reload cached responses to show the new one
