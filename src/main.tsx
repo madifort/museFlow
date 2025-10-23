@@ -2,7 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import Sidebar from './ui/sidebar/Sidebar'
 import './index.css'
-import 
+import "./ui/theme/globals.css";
+
 
 
 
