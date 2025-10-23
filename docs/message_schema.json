@@ -1,0 +1,17 @@
+{
+  "request": {
+    "action": "string (summarize | rewrite | ideate | translate)",
+    "text": "string",
+    "options": {
+      "summaryLength": "short | medium | long",
+      "tone": "formal | casual | professional | creative",
+      "targetLanguage": "string"
+    }
+  },
+  "response": {
+    "success": "boolean",
+    "output": "string",
+    "provider": "string",
+    "latencyMs": "number"
+  }
+}

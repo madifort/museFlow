@@ -1,6 +1,6 @@
 // Utility for building context-aware prompts for Chrome AI APIs
 
-export type AIOperation = "summarize" | "rewrite" | "ideate";
+export type AIOperation = "summarize" | "rewrite" | "ideate" | "translate";
 
 export interface PromptContext {
   content: string;
@@ -33,6 +33,9 @@ export function buildPrompt(
 
     case "ideate":
       return buildIdeatePrompt(baseContent, context);
+
+    case "translate":
+      return buildTranslatePrompt(baseContent, context);
 
     default:
       throw new Error(`Unknown operation type: ${type}`);
@@ -99,6 +102,30 @@ function buildIdeatePrompt(
 
   prompt +=
     "\n\nProvide:\n- 💡 Creative expansion ideas\n- 🎯 Practical applications\n- 🔍 Related concepts to explore\n- 📊 Ways to visualize or present\n- 🚀 Action items or next steps";
+
+  return prompt;
+}
+
+function buildTranslatePrompt(
+  content: string,
+  context?: Partial<PromptContext>,
+): string {
+  let prompt = `Translate this content accurately while preserving meaning:\n\n${content}`;
+
+  if (context?.title) {
+    prompt = `Given this context: "${context.title}"\n\n${prompt}`;
+  }
+
+  if (context?.language) {
+    prompt += `\n\nTarget language: ${context.language}`;
+  }
+
+  if (context?.targetAudience) {
+    prompt += `\n\nTarget audience: ${context.targetAudience}`;
+  }
+
+  prompt +=
+    "\n\nRequirements:\n- Maintain original meaning and tone\n- Use natural, fluent language\n- Preserve technical terms appropriately\n- Keep formatting and structure";
 
   return prompt;
 }

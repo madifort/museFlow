@@ -1,75 +1,38 @@
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
-interface KeyboardShortcut {
-  key: string;
-  ctrlKey?: boolean;
-  shiftKey?: boolean;
-  altKey?: boolean;
-  action: () => void;
-  description: string;
+interface ShortcutConfig {
+  onProcess?: () => void;
+  onClear?: () => void;
+  onCopy?: () => void;
 }
 
-interface UseKeyboardShortcutsProps {
-  shortcuts: KeyboardShortcut[];
-  enabled?: boolean;
-}
-
-export const useKeyboardShortcuts = ({
-  shortcuts,
-  enabled = true,
-}: UseKeyboardShortcutsProps) => {
+export function useKeyboardShortcuts(shortcuts: ShortcutConfig) {
   useEffect(() => {
-    if (!enabled) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const matchingShortcut = shortcuts.find(
-        (shortcut) =>
-          shortcut.key.toLowerCase() === event.key.toLowerCase() &&
-          !!shortcut.ctrlKey === event.ctrlKey &&
-          !!shortcut.shiftKey === event.shiftKey &&
-          !!shortcut.altKey === event.altKey,
-      );
-
-      if (matchingShortcut) {
-        event.preventDefault();
-        matchingShortcut.action();
+    const handler = (e: KeyboardEvent) => {
+      // Ctrl+Enter: Process text
+      if (e.ctrlKey && e.key === 'Enter' && shortcuts.onProcess) {
+        e.preventDefault();
+        shortcuts.onProcess();
+      }
+      
+      // Ctrl+Delete: Clear all
+      if (e.ctrlKey && e.key === 'Delete' && shortcuts.onClear) {
+        e.preventDefault();
+        shortcuts.onClear();
+      }
+      
+      // Ctrl+C: Copy response (only if there's output to copy)
+      if (e.ctrlKey && e.key === 'c' && shortcuts.onCopy) {
+        e.preventDefault();
+        shortcuts.onCopy();
       }
     };
+    
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [shortcuts]);
+}
 
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [shortcuts, enabled]);
-};
-
-// Common shortcuts for MuseFlow
-export const createMuseFlowShortcuts = (actions: {
-  onProcess: () => void;
-  onClear: () => void;
-  onCopy?: () => void;
-}) => [
-  {
-    key: "Enter",
-    ctrlKey: true,
-    action: actions.onProcess,
-    description: "Process text (Ctrl+Enter)",
-  },
-  {
-    key: "Delete",
-    ctrlKey: true,
-    action: actions.onClear,
-    description: "Clear all (Ctrl+Delete)",
-  },
-  ...(actions.onCopy
-    ? [
-        {
-          key: "c",
-          ctrlKey: true,
-          action: actions.onCopy,
-          description: "Copy response (Ctrl+C)",
-        },
-      ]
-    : []),
-];
+export function createMuseFlowShortcuts(config: ShortcutConfig) {
+  return config;
+}
