@@ -10,7 +10,7 @@ interface AIResponse {
 const Sidebar: React.FC = () => {
   const [inputText, setInputText] = useState("");
   const [selectedOperation, setSelectedOperation] = useState<
-    "summarize" | "rewrite" | "ideate"
+    "summarize" | "rewrite" | "ideate" | "translate"
   >("summarize");
   const [isProcessing, setIsProcessing] = useState(false);
   const [output, setOutput] = useState("");
@@ -46,25 +46,42 @@ const Sidebar: React.FC = () => {
     setOutput("");
 
     try {
-      // Send message to background script
+      // Send message to background script using new schema
       const response = await chrome.runtime.sendMessage({
-        type: "PROCESS_TEXT",
-        data: {
-          text: inputText,
-          operation: selectedOperation,
-        },
+        action: selectedOperation,
+        text: inputText,
+        options: {},
+        requestId: `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        source: "sidebar",
       });
 
-      if (response && response.response) {
-        setOutput(response.response);
+      if (response && response.success) {
+        // Extract the result from the response
+        let resultText = '';
+        if (typeof response.data === 'string') {
+          resultText = response.data;
+        } else if (response.data.summary) {
+          resultText = response.data.summary;
+        } else if (response.data.rewrittenText) {
+          resultText = response.data.rewrittenText;
+        } else if (response.data.ideas && Array.isArray(response.data.ideas)) {
+          resultText = response.data.ideas
+            .map((idea: any, index: number) => 
+              `${index + 1}. ${idea.title || "Idea"}\n${idea.description || ""}`
+            )
+            .join("\n\n");
+        } else if (response.data.translatedText) {
+          resultText = response.data.translatedText;
+        } else {
+          resultText = JSON.stringify(response.data, null, 2);
+        }
+        setOutput(resultText);
       } else {
-        setOutput(
-          "Processing completed, but no response received. This is expected in the MVP version.",
-        );
+        setOutput(`Error: ${response?.error || 'MuseFlow backend not responding.'}`);
       }
     } catch (error) {
       console.error("Error processing text:", error);
-      setOutput("Error processing text. Please try again.");
+      setOutput(`Error: ${error.message || 'MuseFlow backend not responding.'}`);
     } finally {
       setIsProcessing(false);
       // Reload cached responses to show the new one
@@ -81,7 +98,7 @@ const Sidebar: React.FC = () => {
     setInputText(response.input);
     setOutput(response.response);
     setSelectedOperation(
-      response.operation as "summarize" | "rewrite" | "ideate",
+      response.operation as "summarize" | "rewrite" | "ideate" | "translate",
     );
   };
 
@@ -139,7 +156,7 @@ const Sidebar: React.FC = () => {
             >
               Choose operation:
             </label>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               {[
                 {
                   value: "summarize",
@@ -162,12 +179,19 @@ const Sidebar: React.FC = () => {
                   desc: "Generate creative ideas",
                   color: "purple",
                 },
+                {
+                  value: "translate",
+                  label: "Translate",
+                  icon: "🌐",
+                  desc: "Translate to another language",
+                  color: "orange",
+                },
               ].map((op) => (
                 <button
                   key={op.value}
                   onClick={() =>
                     setSelectedOperation(
-                      op.value as "summarize" | "rewrite" | "ideate",
+                      op.value as "summarize" | "rewrite" | "ideate" | "translate",
                     )
                   }
                   className={`p-4 rounded-xl border-2 transition-all duration-200 ${

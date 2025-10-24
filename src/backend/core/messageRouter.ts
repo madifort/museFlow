@@ -97,9 +97,14 @@ export async function handleMessage(
       senderId: sender.tab?.id,
     });
 
-    // Validate request
+    // Validate request - ensure action is present and ignore legacy 'type' field
     if (!request.action) {
       throw new Error("Action is required");
+    }
+
+    // Log that we're ignoring legacy 'type' field if present
+    if ((request as any).type) {
+      console.log('[MuseFlow] Ignoring legacy type field:', (request as any).type);
     }
 
     let result: any;
@@ -170,6 +175,8 @@ export async function handleMessage(
       metadata,
     };
 
+    console.log('[MuseFlow][INFO] Received', request.action);
+    console.log('[MuseFlow][INFO] Processed', request.action, 'successfully');
     console.log('[MuseFlow] Router executed action:', request.action);
     console.log('[MuseFlow] Response sent:', response);
 

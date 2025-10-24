@@ -16,7 +16,7 @@ interface AIResponse {
 const Popup: React.FC = () => {
   const [inputText, setInputText] = useState("");
   const [selectedOperation, setSelectedOperation] = useState<
-    "summarize" | "rewrite" | "ideate"
+    "summarize" | "rewrite" | "ideate" | "translate"
   >("summarize");
   const [isProcessing, setIsProcessing] = useState(false);
   const [output, setOutput] = useState("");
@@ -193,7 +193,7 @@ const Popup: React.FC = () => {
           >
             Operation:
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {[
               {
                 value: "summarize",
@@ -213,12 +213,18 @@ const Popup: React.FC = () => {
                 icon: "💡",
                 desc: "Generate ideas",
               },
+              {
+                value: "translate",
+                label: "Translate",
+                icon: "🌐",
+                desc: "Translate text",
+              },
             ].map((op) => (
               <button
                 key={op.value}
                 onClick={() =>
                   setSelectedOperation(
-                    op.value as "summarize" | "rewrite" | "ideate",
+                    op.value as "summarize" | "rewrite" | "ideate" | "translate",
                   )
                 }
                 className={`p-2 rounded-lg border-2 transition-all duration-200 text-xs ${
