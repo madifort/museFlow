@@ -4,9 +4,6 @@
  */
 
 // Core functionality
-// Initialize backend on import
-import { initializeBackend } from "./core/messageRouter";
-
 export * from "./core/config";
 export * from "./core/promptBuilder";
 export * from "./core/messageRouter";
@@ -24,8 +21,3 @@ export * from "./storage/settings";
 // Utils
 export * from "./utils/logger";
 export * from "./utils/chromeWrapper";
-
-// Auto-initialize when backend is imported
-initializeBackend().catch((error) => {
-  console.error("MuseFlow Backend: Failed to initialize:", error);
-});

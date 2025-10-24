@@ -1,13 +1,59 @@
 // Background service worker for Chrome extension
-import { handleMessage } from "../backend/core/messageRouter";
-import { logger } from "../backend/utils/logger";
+import { handleMessage, initializeMessageRouter } from "../backend/core/messageRouter";
+import { initializeLogging, logInfo, logWarn, logError } from "../backend/utils/logger";
 
 // Initialize the backend system
 async function initializeBackend() {
   try {
-    await logger.initializeLogging();
-    console.log('[MuseFlow] Backend initialized successfully');
+    // Step 1: Initialize logging
+    await initializeLogging();
+    logInfo('Initializing backend...');
+    
+    // Step 2: Initialize message router
+    await initializeMessageRouter();
+    logInfo('Backend initialized successfully');
+
+    // Step 3: Chrome AI Detection
+    const hasChromeAI = 
+      typeof chrome !== 'undefined' && 
+      chrome.ai && 
+      (chrome.ai.languageModel || chrome.ai.summarizer);
+    
+    logInfo(`Chrome AI detected: ${!!hasChromeAI}`);
+
+    if (hasChromeAI) {
+      logInfo('Testing Chrome AI summarizer...');
+      try {
+        // Test Chrome AI summarizer if available
+        if (chrome.ai.summarizer) {
+          const result = await chrome.ai.summarizer.summarize('MuseFlow AI integration test.', {
+            length: 'short',
+            format: 'paragraph'
+          });
+          logInfo('Chrome AI summarizer test successful:', result.summary);
+        }
+        
+        // Test Chrome AI language model if available
+        if (chrome.ai.languageModel) {
+          const model = await chrome.ai.languageModel.create({ model: 'gemini-pro' });
+          const response = await model.prompt('Test prompt for MuseFlow integration.', {
+            temperature: 0.7,
+            maxTokens: 50
+          });
+          logInfo('Chrome AI language model test successful:', response.response);
+        }
+        
+        logInfo('Chrome AI integration verified - using native APIs');
+      } catch (chromeError) {
+        logWarn('Chrome AI test failed, will use fallback:', chromeError);
+      }
+    } else {
+      logWarn('Chrome AI not available. Using fallback providers.');
+    }
+
+    logInfo('MuseFlow backend ready for production');
   } catch (error) {
+    logError('Failed to initialize MuseFlow backend:', error);
     console.error("Failed to initialize MuseFlow backend:", error);
   }
 }

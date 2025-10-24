@@ -201,6 +201,7 @@ export async function initializeLogging(): Promise<void> {
       logger.setLevel(result.logLevel);
     }
 
+    console.info('[MuseFlow] Logger initialized');
     logger.info("Logging initialized", {
       level: LogLevel[logger.getLevel()],
       timestamp: new Date().toISOString(),
@@ -209,6 +210,27 @@ export async function initializeLogging(): Promise<void> {
     console.error("Failed to initialize logging:", error);
   }
 }
+
+/**
+ * Simple logging functions for easy use
+ */
+export const logInfo = (...args: any[]) => {
+  const message = args.join(' ');
+  console.info('[MuseFlow][INFO]', message);
+  logger.info(message);
+};
+
+export const logWarn = (...args: any[]) => {
+  const message = args.join(' ');
+  console.warn('[MuseFlow][WARN]', message);
+  logger.warn(message);
+};
+
+export const logError = (...args: any[]) => {
+  const message = args.join(' ');
+  console.error('[MuseFlow][ERROR]', message);
+  logger.error(message);
+};
 
 /**
  * Set log level and persist to storage
