@@ -68,7 +68,10 @@ export async function initializeMessageRouter(): Promise<void> {
     await initializeSettings();
 
     // Set up message listener
-    chrome.runtime.onMessage.addListener(handleMessage);
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      handleMessage(request, sender, sendResponse);
+      return true; // Keep message channel open for async response
+    });
 
     logger.info("Message router initialized successfully");
   } catch (error) {
@@ -96,6 +99,8 @@ export async function handleMessage(
       tabId: request.tabId,
       senderId: sender.tab?.id,
     });
+    
+    console.log('[MuseFlow] Full request object:', request);
 
     // Validate request - ensure action is present and ignore legacy 'type' field
     if (!request.action) {

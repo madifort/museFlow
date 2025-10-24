@@ -48,6 +48,7 @@ const Popup: React.FC = () => {
       return;
     }
 
+    console.log('[MuseFlow] Popup: Starting process for action:', selectedOperation);
     setIsProcessing(true);
     setOutput("");
 
@@ -55,6 +56,7 @@ const Popup: React.FC = () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
+      console.log('[MuseFlow] Popup: Sending message to background script');
       // Send message to background script using proper format
       const response = await chrome.runtime.sendMessage({
         action: selectedOperation,
@@ -65,6 +67,7 @@ const Popup: React.FC = () => {
       });
 
       clearTimeout(timeout);
+      console.log('[MuseFlow] Popup: Received response:', response);
 
       if (!response || !response.success) {
         throw new Error(response?.error || 'No response from MuseFlow backend');
@@ -93,8 +96,16 @@ const Popup: React.FC = () => {
       setOutput(resultText);
     } catch (error) {
       console.error('[MuseFlow] Popup Error:', error);
+      console.error('[MuseFlow] Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      
       if (error.name === 'AbortError') {
         setOutput("Request timed out. Please try again.");
+      } else if (error.message.includes('Extension context invalidated')) {
+        setOutput("Extension context invalidated. Please reload the page and try again.");
       } else {
         setOutput(`Error: ${error.message || 'MuseFlow backend not responding.'}`);
       }
@@ -143,7 +154,7 @@ const Popup: React.FC = () => {
   useKeyboardShortcuts({ shortcuts });
 
   return (
-    <div className="w-96 h-[600px] bg-gradient-to-br from-gray-50 to-blue-50 p-4 overflow-y-auto">
+    <div className="w-96 h-[600px] bg-gradient-to-br from-gray-50 to-blue-50 p-4 overflow-y-auto fixed top-0 left-0 z-50">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
